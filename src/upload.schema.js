@@ -40,8 +40,11 @@ const UploadSchema = new mongoose.Schema({
         required: true,
         unique: true
       },
-      upvote: {
-        type: Boolean,
+      impact: {
+        type: Number,
+        min: -1,
+        max: 1,
+        set: Math.round,
         required: true,
       },
       createdAt: {

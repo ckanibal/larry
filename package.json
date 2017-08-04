@@ -38,6 +38,7 @@
     "express": "^4.15.3",
     "gridfs-stream": "^1.1.1",
     "http-status": "^1.0.1",
+    "js2xml": "^1.0.8",
     "mongoose": "^4.11.3",
     "morgan": "^1.8.2",
     "pug": "^2.0.0-rc.2",

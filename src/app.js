@@ -3,9 +3,9 @@ import logger from 'morgan';
 import bodyParser from 'body-parser';
 import routes from './routes';
 import mongoose from 'mongoose';
-import assert from 'assert';
+import httpStatus from 'http-status';
 
-const { MONGO_URL = 'mongodb://localhost/larry' } = process.env;
+const {MONGO_URL = 'mongodb://localhost/larry'} = process.env;
 
 
 const app = express();
@@ -15,7 +15,7 @@ app.use(logger('dev', {
   skip: () => app.get('env') === 'test'
 }));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 
 // Database
 mongoose.Promise = global.Promise;
@@ -35,15 +35,14 @@ app.use((req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
-  res
-    .status(err.status || 500)
-    .json({
-      errors: [
-        {
-          message: err.message
-        }
-      ]
-    });
+  res.status(err.status || httpStatus.INTERNAL_SERVER_ERROR);
+  res.json({
+    errors: [
+      {
+        message: err.message
+      }
+    ]
+  });
 });
 
 export default app;

@@ -12,9 +12,11 @@ routes.route('/uploads')
     next();
   })
   .get((req, res, next) => {
-    console.log(req.query);
     Upload.index(req.query).then((uploads) => {
-      res.json(uploads);
+      res.json({
+        'message': 'Success',
+        uploads
+      });
     }).catch(next);
   })
   .post((req, res, next) => {
@@ -22,10 +24,22 @@ routes.route('/uploads')
       .then((upload) => {
         res.json({
           'message': 'Success',
-          'Upload': upload
+          upload
         })
       })
       .catch(next);
   });
+
+routes.route('/uploads/:uploadId')
+  .get(({ params: { uploadId: id } }, res, next) => {
+    Upload.get(id).then((upload) => {
+      res.json({
+        'message': 'Success',
+        upload
+      });
+    }).catch(next);
+  })
+  .patch((req, res, next) => next)
+  .delete((req, res, next) => next);
 
 export default routes;
