@@ -63,10 +63,9 @@ router.post("/", auth.required, async (req: express.Request, res: express.Respon
   upload.author = user;
 
   res.body = upload.save().then(() => {
-    return new DocumentResource(upload, new Link(`upload/${upload.id}`, "upload", LinkRel.Self));
-  });
-
-  return next();
+    res.body = new DocumentResource(upload, new Link(`upload/${upload.id}`, "upload", LinkRel.Self));
+    return next();
+  }).catch(next);
 });
 
 // Preload article objects on routes with ":upload"
@@ -151,6 +150,7 @@ router.get("/:upload/pic", auth.optional, (req: express.Request, res: express.Re
       if (err) {
         return next(err);
       }
+      res.contentType(upload.pic.contentType);
       upload.pic.createReadStream().pipe(res);
     } else {
       return res.sendStatus(httpStatus.NOT_FOUND);
