@@ -7,7 +7,7 @@ const auth = require("../auth");
 const router = express.Router();
 
 router.get("/user", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  User.findById(req.payload.id).then((user: IUserModel) => {
+  User.findById(req.user.id).then((user: IUserModel) => {
     if (!user) {
       return res.sendStatus(401);
     }
@@ -17,7 +17,7 @@ router.get("/user", auth.required, (req: express.Request, res: express.Response,
 });
 
 router.put("/user", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  User.findById(req.payload.id).then((user: IUserModel) => {
+  User.findById(req.user.id).then((user: IUserModel) => {
     if (!user) { return res.sendStatus(401); }
 
     // only update fields that were actually passed...
