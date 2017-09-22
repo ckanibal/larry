@@ -1,4 +1,8 @@
-import mongoose = require("mongoose");
+// models/File.ts
+
+import { Schema, PaginateModel, Document } from "mongoose";
+import { mongoose } from "../config/database";
+
 import * as fs from "fs";
 import { Readable } from "stream";
 
@@ -6,8 +10,21 @@ import * as crypto from "crypto";
 import * as blake2 from "blake2";
 
 
-interface IFile {
+export interface IFile extends Document {
+  length: number;
+  chunkSize: number;
+  uploadDate: Date;
+  md5: string;
   filename: string;
+  contentType: string;
+  aliases: string[];
+  metadata: {};
+}
+
+export interface IFileModel extends PaginateModel<IFile> {
+  uploadFromFs(file: {}, options: {}): Promise<IFile>;
+  createReadStream(file: any): Readable;
+  hashify(): Promise<IFile>;
 }
 
 const FileSchema = new mongoose.Schema({
@@ -79,31 +96,51 @@ FileSchema.methods.createReadStream = function() {
   });
 };
 
-FileSchema.statics.uploadFromFs = function (file: any) {
+FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hashes: boolean }) {
   return new Promise((resolve, reject) => {
     const gridStream = mongoose.gfs.createWriteStream({
       filename: file.originalname,
       content_type: file.mimetype,
     });
-    fs.createReadStream(file.path).pipe(gridStream);
+
+    const sha1 = hashes ? crypto.createHash("sha1") : undefined;
+    const blake2b = hashes ? blake2.createHash("blake2b") : undefined;
+
+    fs.createReadStream(file.path)
+      .pipe(gridStream)
+      .on("data", (chunk: Buffer) => {
+        if (hashes) {
+          sha1.update(chunk);
+          blake2b.update(chunk);
+        }
+      })
+      .on("error", reject);
 
     gridStream.on("error", reject);
-    gridStream.on("close", (file: any) => {
-      this.findById(file._id, function (err: Error, doc: mongoose.Document) {
+    gridStream.on("close", (file: IFile) => {
+      const metadata: { hashes: { md5?: string, sha1?: string, blake2b?: string } } = {
+        hashes: {
+          md5: file.md5,
+        }
+      };
+
+      if (hashes) {
+        metadata.hashes.sha1 = sha1.digest("hex");
+        metadata.hashes.blake2b = blake2b.digest("hex");
+      }
+
+      this.findByIdAndUpdate(file._id, {
+        $set: {
+          metadata
+        }
+      }, { new: true }, (err: Error, file: IFile) => {
         if (err) {
           reject(err);
         }
-        resolve(doc);
+        resolve(file);
       });
     });
   });
 };
 
-export interface IFileModel extends IFile, mongoose.Document {
-  createReadStream(file: any): Readable;
-  uploadFromFs(file: any): Promise<IFileModel>;
-  hashify(): Promise<IFileModel>;
-}
-
-const model = mongoose.model<IFileModel>("File", FileSchema);
-export default <typeof model & IFileModel>model;
+export const File = mongoose.model<IFile>("File", FileSchema) as IFileModel;

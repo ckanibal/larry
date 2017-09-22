@@ -1,29 +1,42 @@
-import mongoose = require("mongoose");
+import { mongoose } from "../config/database";
+import { Schema, Model, Document, PaginateModel } from "mongoose";
+
 import uniqueValidator = require("mongoose-unique-validator");
+import mongoosePaginate = require("mongoose-paginate");
 import slug = require("slug");
 
-import Voting = require("./Voting");
-import { default as User, IUserModel } from "./User";
-import { default as Comment, ICommentModel } from "./Comment";
-import { default as File } from "./File";
+import { User, IUser } from "./User";
+import { Comment, IComment } from "./Comment";
+import { File, IFile } from "./File";
+import { Tag, ITag } from "./Tag";
 
-interface IUpload {
+import { votingPlugin, Votable } from "../concerns/Voting";
+
+/**
+ * Upload Model
+ */
+
+
+export interface IUpload extends Document, Votable {
   slug: string;
   title: string;
   description: string;
-  author: IUserModel;
+  author: IUser;
   tagList: string[];
-  pic: typeof File;
-  file: typeof File;
-  comments: typeof Comment[];
+  pic: IFile;
+  file: IFile;
+  comments: IComment[];
   meta: any;
-
-  // methods
-  slugify(): string;
-  updateFavoriteCount(): typeof User;
 }
 
-const UploadSchema = new mongoose.Schema({
+export interface IUploadModel extends PaginateModel<IUpload> {
+  // declare all additional schema methods here
+  slugify(): string;
+  updateFavoriteCount(): IUser;
+}
+
+
+const UploadSchema = new Schema({
   slug: {
     type: String,
     lowercase: true,
@@ -40,21 +53,21 @@ const UploadSchema = new mongoose.Schema({
     required: true,
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    type: Schema.Types.ObjectId,
+    ref: User.modelName
   },
   tags: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Tag",
+    type: Schema.Types.ObjectId,
+    ref: Tag.modelName
   }],
   pic: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: File.modelName
   },
   file: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: File.modelName
-  }
+  },
 }, {
   timestamps: true
 });
@@ -62,7 +75,15 @@ const UploadSchema = new mongoose.Schema({
 UploadSchema.plugin(uniqueValidator, {
   message: "is already taken"
 });
-UploadSchema.plugin(Voting);
+UploadSchema.plugin(mongoosePaginate);
+UploadSchema.plugin(votingPlugin, {
+  validate: {
+    validator: function (v: number) {
+      return [-1, +1].includes(v);
+    },
+    message: "Vote must be +/- 1 (at least for now)"
+  }
+});
 
 UploadSchema.pre("validate", function (next) {
   if (!this.slug) {
@@ -72,20 +93,20 @@ UploadSchema.pre("validate", function (next) {
   next();
 });
 
-UploadSchema.methods.slugify = function() {
+UploadSchema.methods.slugify = function () {
   this.slug = slug(this.title);
 };
 
-UploadSchema.methods.updateFavoriteCount = function() {
+UploadSchema.methods.updateFavoriteCount = function () {
   const upload = this;
 
-  return User.count({favorites: {$in: [upload._id]}}).then(function(count: Number) {
+  return User.count({favorites: {$in: [upload._id]}}).then(function (count: Number) {
     upload.favoritesCount = count;
     return upload.save();
   });
 };
 
-UploadSchema.methods.comment = function(comment: ICommentModel, user: IUserModel, fn: Function) {
+UploadSchema.methods.comment = function (comment: IComment, user: IUser, fn: Function) {
   comment.author = user || comment.author;
   comment.upload = this._id;
   comment.save(function (err: Error, ...args: any[]) {
@@ -104,6 +125,7 @@ UploadSchema.methods.comment = function(comment: ICommentModel, user: IUserModel
  * @param page
  * @param limit
  */
+/*
 UploadSchema.statics.paginate = async function (query: any, {sort, page, limit}: { sort: string, page: number, limit: number }) {
   const total = await this.count()
     .where(query)
@@ -112,7 +134,7 @@ UploadSchema.statics.paginate = async function (query: any, {sort, page, limit}:
   const docs = await this.find()
     .where(query)
     .sort(sort)
-    .skip((page - 1)  * limit)
+    .skip((page - 1) * limit)
     .limit(limit)
     .populate("author", "username")
     .exec();
@@ -126,6 +148,6 @@ UploadSchema.statics.paginate = async function (query: any, {sort, page, limit}:
     pages
   };
 };
+*/
 
-export interface IUploadModel extends IUpload, mongoose.Document { }
-export default mongoose.model<IUploadModel>("Upload", UploadSchema);
+export const Upload = mongoose.model<IUpload>("Upload", UploadSchema) as IUploadModel;

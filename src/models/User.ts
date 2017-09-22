@@ -1,19 +1,29 @@
-import mongoose = require("mongoose");
+// models/User.ts
+
+import { mongoose } from "../config/database";
+import { Schema, PaginateModel, Document } from "mongoose";
+
 import uniqueValidator = require("mongoose-unique-validator");
+import mongoosePaginate = require("mongoose-paginate");
 import crypto = require("crypto");
 import jwt = require("jsonwebtoken");
 
-import Voting = require("./Voting");
-import { IUploadModel } from "./Upload";
+
+import { Upload, IUpload } from "./Upload";
+
+/**
+ * User Model
+ */
+
+
 const secret = process.env.SECRET;
 
-
-interface IUser {
+export interface IUser extends Document {
   username: string;
   email: string;
   bio: string;
   image: string;
-  favorites: IUploadModel[];
+  favorites: IUpload[];
   hash: string;
   salt: string;
 
@@ -21,18 +31,37 @@ interface IUser {
   validPassword(password: string): boolean;
 }
 
-const UserSchema = new mongoose.Schema({
-  username: {type: String, lowercase: true, unique: true, required: [true, "can't be blank"], match: [/^[a-zA-Z0-9]+$/, "is invalid"], index: true},
-  email: {type: String, lowercase: true, unique: true, required: [true, "can't be blank"], match: [/\S+@\S+\.\S+/, "is invalid"], index: true},
+export interface IUserModel extends PaginateModel<IUser> {
+  // tbd
+}
+
+
+const UserSchema = new Schema({
+  username: {
+    type: String,
+    lowercase: true,
+    unique: true,
+    required: [true, "can't be blank"],
+    match: [/^[a-zA-Z0-9]+$/, "is invalid"],
+    index: true
+  },
+  email: {
+    type: String,
+    lowercase: true,
+    unique: true,
+    required: [true, "can't be blank"],
+    match: [/\S+@\S+\.\S+/, "is invalid"],
+    index: true
+  },
   bio: String,
   image: String,
-  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Upload" }],
+  favorites: [{type: Schema.Types.ObjectId, ref: "Upload"}],
   hash: String,
   salt: String
-}, { timestamps: true });
+}, {timestamps: true});
 
 UserSchema.set("toJSON", {
-  transform: function(doc: mongoose.Document, ret: IUserModel, options: any) {
+  transform: function (doc: mongoose.Document, ret: IUser, options: any) {
     return {
       id: ret.id,
       username: ret.username,
@@ -41,19 +70,19 @@ UserSchema.set("toJSON", {
 });
 
 UserSchema.plugin(uniqueValidator, {message: "is already taken."});
-UserSchema.plugin(Voting);
+UserSchema.plugin(mongoosePaginate);
 
-UserSchema.methods.validPassword = function(password: string) {
+UserSchema.methods.validPassword = function (password: string) {
   const hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, "sha512").toString("hex");
   return this.hash === hash;
 };
 
-UserSchema.methods.setPassword = function(password: string) {
+UserSchema.methods.setPassword = function (password: string) {
   this.salt = crypto.randomBytes(16).toString("hex");
   this.hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, "sha512").toString("hex");
 };
 
-UserSchema.methods.generateJWT = function() {
+UserSchema.methods.generateJWT = function () {
   const today = new Date();
   const exp = new Date(today);
   exp.setDate(today.getDate() + 60);
@@ -65,7 +94,7 @@ UserSchema.methods.generateJWT = function() {
   }, secret);
 };
 
-UserSchema.methods.toAuthJSON = function(){
+UserSchema.methods.toAuthJSON = function () {
   return {
     username: this.username,
     email: this.email,
@@ -75,7 +104,7 @@ UserSchema.methods.toAuthJSON = function(){
   };
 };
 
-UserSchema.methods.toProfileJSONFor = function(user: any) {
+UserSchema.methods.toProfileJSONFor = function (user: any) {
   return {
     username: this.username,
     bio: this.bio,
@@ -83,7 +112,7 @@ UserSchema.methods.toProfileJSONFor = function(user: any) {
   };
 };
 
-UserSchema.methods.favorite = function(id: number){
+UserSchema.methods.favorite = function (id: number) {
   if (this.favorites.indexOf(id) === -1) {
     this.favorites.push(id);
   }
@@ -91,16 +120,15 @@ UserSchema.methods.favorite = function(id: number){
   return this.save();
 };
 
-UserSchema.methods.unfavorite = function(id: number){
+UserSchema.methods.unfavorite = function (id: number) {
   this.favorites.remove(id);
   return this.save();
 };
 
-UserSchema.methods.isFavorite = function(id: number){
-  return this.favorites.some(function(favoriteId: number){
+UserSchema.methods.isFavorite = function (id: number) {
+  return this.favorites.some(function (favoriteId: number) {
     return favoriteId.toString() === id.toString();
   });
 };
 
-export interface IUserModel extends IUser, mongoose.Document { }
-export default mongoose.model<IUserModel>("User", UserSchema);
+export const User = mongoose.model<IUser>("User", UserSchema) as IUserModel;

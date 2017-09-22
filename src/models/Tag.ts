@@ -1,15 +1,22 @@
-import mongoose = require("mongoose");
+// models/Tag.ts
 
-import Voting = require("./Voting");
-import { IUserModel } from "./User";
-import { IUploadModel } from "./Upload";
+import { Schema, Model, Document } from "mongoose";
+import { mongoose } from "../config/database";
 
+/**
+ * Tag Model
+ */
 
-interface ITag {
+export interface ITag extends Document {
   tag: string;
-  author: IUserModel;
-  upload: IUploadModel;
+  author: {};
+  upload: {};
 }
+
+export interface ITagModel extends Model<ITag> {
+
+}
+
 
 const TagSchema = new mongoose.Schema({
   tag: String,
@@ -24,7 +31,5 @@ const TagSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-TagSchema.plugin(Voting);
 
-export interface ITagModel extends ITag, mongoose.Document { }
-export default mongoose.model<ITagModel>("Tag", TagSchema);
+export const Tag = mongoose.model<ITag>("Tag", TagSchema) as ITagModel;

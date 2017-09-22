@@ -2,11 +2,9 @@ import * as express from "express";
 import * as cors from "cors";
 import * as logger from "morgan";
 import * as bodyParser from "body-parser";
-import * as mongoose from "mongoose";
 import * as expressValidator from "express-validator";
 import * as httpStatus from "http-status";
 import * as errorHandler from "errorhandler";
-import Grid = require("gridfs-stream");
 
 import routes = require("./routes");
 require("./passport");
@@ -44,16 +42,7 @@ export class Server {
     /**
      * Mongoose configuration
      */
-    (<any>mongoose).Promise = global.Promise;
-    mongoose.connect(process.env.MONGODB_URI, {
-      useMongoClient: true,
-    }).then(function() {
-      (<any>mongoose).gfs = Grid(mongoose.connection.db, mongoose.mongo);
-    })
-      .catch((err: Error) => {
-        console.error("Could not connect to database: ", err);
-        process.exit(-1);
-    });
+
 
     /**
      * Create express server

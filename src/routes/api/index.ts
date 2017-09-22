@@ -1,12 +1,17 @@
-import express = require("express");
+import { Router } from "express";
 import acl = require("../acl");
-const router = express.Router();
 
-router.use("/", require("./users"));
+
+const router = Router();
+
 // router.use("/profiles", require("./profiles"));
+router.use("/media", require("./media"));
 router.use("/uploads", require("./uploads"));
-// router.use("/tags", require("./tags"));
+router.use("/users", require("./users"));
+router.use("/user", require("./user"));
+router.use("/votes", require("./votes"));
 
+/*
 router.use(function(err: Error, req: express.Request, res: express.Response, next: express.NextFunction) {
   if (err.name === "ValidationError") {
     return res.status(422).json({
@@ -16,5 +21,6 @@ router.use(function(err: Error, req: express.Request, res: express.Response, nex
 
   return next(err);
 });
+*/
 
 export = router;

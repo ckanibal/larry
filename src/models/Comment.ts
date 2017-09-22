@@ -1,12 +1,22 @@
-import mongoose = require("mongoose");
-import { IUserModel } from "./User";
-import { IUploadModel } from "./Upload";
+// models/Comment.ts
 
-interface IComment {
+import { mongoose } from "../config/database";
+import { Schema, Model, Document, PaginateModel } from "mongoose";
+import mongoosePaginate = require("mongoose-paginate");
+
+import { IUser } from "./User";
+import { IUpload } from "./Upload";
+
+export interface IComment extends Document {
   body: string;
-  author: IUserModel;
-  upload: IUploadModel;
+  author: IUser;
+  upload: IUpload;
 }
+
+export interface ICommentModel extends PaginateModel<IComment> {
+  // tbd.
+}
+
 
 const CommentSchema = new mongoose.Schema({
   body: {
@@ -24,6 +34,6 @@ const CommentSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+CommentSchema.plugin(mongoosePaginate);
 
-export interface ICommentModel extends IComment, mongoose.Document { }
-export default mongoose.model<ICommentModel>("Comment", CommentSchema);
+export const Comment = mongoose.model<IComment>("Comment", CommentSchema) as ICommentModel;
