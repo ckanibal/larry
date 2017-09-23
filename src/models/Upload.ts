@@ -22,7 +22,7 @@ export interface IUpload extends Document, Votable {
   title: string;
   description: string;
   author: IUser;
-  tagList: string[];
+  tags: ITag[];
   pic: IFile;
   file: IFile;
   comments: IComment[];
@@ -56,10 +56,7 @@ const UploadSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: User.modelName
   },
-  tags: [{
-    type: Schema.Types.ObjectId,
-    ref: Tag.modelName
-  }],
+  tags: [Tag.schema],
   pic: {
     type: Schema.Types.ObjectId,
     ref: File.modelName

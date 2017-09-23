@@ -2,9 +2,10 @@
 
 import express = require("express");
 import passport = require("passport");
+import httpStatus = require("http-status");
 
 import { User, IUser } from "../../models/User";
-const auth = require("../auth");
+const auth = require("../../config/auth");
 
 /**
  * Provide current user information
@@ -12,7 +13,7 @@ const auth = require("../auth");
 const router = express.Router();
 
 
-router.get("/user", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.get("/", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
   User.findById(req.user.id).then((user: IUser) => {
     if (!user) {
       return res.sendStatus(401);
@@ -22,7 +23,7 @@ router.get("/user", auth.required, (req: express.Request, res: express.Response,
   }).catch(next);
 });
 
-router.put("/user", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.put("/", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
   User.findById(req.user.id).then((user: IUser) => {
     if (!user) { return res.sendStatus(401); }
 
@@ -51,11 +52,11 @@ router.put("/user", auth.required, (req: express.Request, res: express.Response,
 
 router.post("/login", (req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (!req.body.user.email) {
-    return res.status(422).json({errors: {email: "can't be blank"}});
+    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {email: "can't be blank"}});
   }
 
   if (!req.body.user.password) {
-    return res.status(422).json({errors: {password: "can't be blank"}});
+    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {password: "can't be blank"}});
   }
 
   passport.authenticate("local", { session: false }, (err: any, user: any, info: any) => {
