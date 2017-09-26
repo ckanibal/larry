@@ -35,16 +35,13 @@ export abstract class Resource {
    */
   toXml(): string {
     const xml = xmlbuilder
-      .create(this.title, {
-        stringify: {
-        }
-      })
-      .ele(this.toObject())
+      .create(this.title)
+      .ele(this.toObject(true))
       .end();
     return xml;
   }
 
-  protected toObject() {
+  protected toObject(replaceKeys: boolean = false) {
     // prepare links
     const _links = this.links.filter(l => l)
       .map(link => ({
@@ -85,13 +82,15 @@ export class DocumentResource extends Resource {
   /**
    *
    */
-  toObject() {
+  toObject(replaceKeys: boolean = false) {
     const resource = super.toObject();
 
     function objectify (obj: Object) {
       // console.log("objectify", obj, typeof obj);
       return Object.entries(obj).map(([key, value]) => {
-        key = key.replace(/^_/, "@");
+        if (replaceKeys) {
+          key = key.replace(/^_/, "@");
+        }
         if (!util.isPrimitive(value)) {
           // console.log("non primitive:", key, value, "type:", typeof value);
           if (value instanceof Types.ObjectId) {
@@ -134,11 +133,11 @@ export class CollectionResource extends Resource {
   /**
    *
    */
-  toObject() {
+  toObject(replaceKeys: boolean = false) {
     const resource = super.toObject();
 
     // children
-    const children = this._res.map(res => res.toObject());
+    const children = this._res.map(res => res.toObject(replaceKeys));
 
     return Object.assign(resource, {
       _meta: this._meta,
