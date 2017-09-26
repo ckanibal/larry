@@ -28,8 +28,8 @@ router.get("/", auth.optional, paginationParams,
       }
     ).then(({docs: uploads, total, limit, page, pages}) => {
       const resource = new CollectionResource(
-        uploads.map(doc => new DocumentResource(doc)),
-        new Link("/uploads", "uploads", LinkRel.Self)
+        uploads.map(doc => new DocumentResource(doc, new Link(doc.id, "Upload", LinkRel.Self))),
+        new Link("/", "uploads", LinkRel.Self)
       );
       resource.meta = {
         pagination: {
@@ -37,6 +37,7 @@ router.get("/", auth.optional, paginationParams,
           limit,
           page,
           pages,
+          foo: undefined
         }
       };
       res.body = resource;

@@ -49,6 +49,7 @@
     "slug": "^0.9.1",
     "tslint": "^5.6.0",
     "typescript": "^2.4.2",
+    "xmlbuilder": "^9.0.4",
     "xmlify": "chrisveness/xmlify"
   },
   "devDependencies": {
@@ -74,6 +75,7 @@
     "@types/passport-local": "^1.0.30",
     "@types/slug": "^0.9.0",
     "@types/validator": "^6.2.3",
+    "@types/xmlbuilder": "^0.0.31",
     "babel-jest": "^20.0.3",
     "babel-register": "^6.24.1",
     "concurrently": "^3.5.0",

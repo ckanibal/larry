@@ -9,6 +9,8 @@ import { File, IFile } from "../../models/File";
 import { Validator } from "../../concerns/Validator";
 import auth = require("../../config/auth");
 import upload = require("../../config/multer");
+import { DocumentResource } from "../../Resource";
+import { Link, LinkRel } from "../../Link";
 
 /**
  * Media Serving Endpoint
@@ -72,7 +74,7 @@ router.post("/", auth.required, upload.single("media"), function (req: Request, 
       fs.unlink(req.file.path, err => {
         if (err == undefined) {
           // seems good
-          res.json(file);
+          res.body = new DocumentResource(file, new Link(file.id, "File", LinkRel.Self));
         } else {
           res.sendStatus(httpStatus.INTERNAL_SERVER_ERROR);
         }

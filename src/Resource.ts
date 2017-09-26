@@ -1,6 +1,8 @@
-import { Document } from "mongoose";
+import { Document, Schema, Types } from "mongoose";
+import * as util from "util";
+import xmlbuilder = require("xmlbuilder");
+
 import { Link, LinkRel } from "./Link";
-import xmlify = require("xmlify");
 
 
 export abstract class Resource {
@@ -19,11 +21,6 @@ export abstract class Resource {
   /**
    *
    */
-  abstract toXml(): string;
-
-  /**
-   *
-   */
   toJSON({ pretty }: { pretty?: string }): string {
     let indentLevel: number = 0;
     if (pretty !== undefined) {
@@ -32,8 +29,22 @@ export abstract class Resource {
     return JSON.stringify (this.toObject(), undefined, indentLevel);
   }
 
-  protected toObject() {
+  /**
+   * Converts a object to XML
+   * @returns {string}
+   */
+  toXml(): string {
+    const xml = xmlbuilder
+      .create(this.title, {
+        stringify: {
+        }
+      })
+      .ele(this.toObject())
+      .end();
+    return xml;
+  }
 
+  protected toObject() {
     // prepare links
     const _links = this.links.filter(l => l)
       .map(link => ({
@@ -64,9 +75,7 @@ export class DocumentResource extends Resource {
   /**
    *
    * @param _doc
-   * @param _title
-   * @param _href
-   * @param _parent
+   * @param ...links
    */
   constructor(private _doc: Document, ...links: Link[]) {
     super();
@@ -78,11 +87,30 @@ export class DocumentResource extends Resource {
    */
   toObject() {
     const resource = super.toObject();
-    return Object.assign(resource, this._doc.toObject());
-  }
 
-  toXml(): string {
-    return xmlify(this._doc, this.title);
+    function objectify (obj: Object) {
+      // console.log("objectify", obj, typeof obj);
+      return Object.entries(obj).map(([key, value]) => {
+        key = key.replace(/^_/, "@");
+        if (!util.isPrimitive(value)) {
+          // console.log("non primitive:", key, value, "type:", typeof value);
+          if (value instanceof Types.ObjectId) {
+            value = value.toString();
+          } else if (value instanceof Date) {
+            value = value.toISOString();
+          } else if (util.isArray(value)) {
+            value = value.map(objectify);
+          } else {
+            value = objectify(value);
+          }
+          // console.log(" => resolved: ", value);
+        }
+        return { [key]: value };
+      }).reduce((acc, obj) => Object.assign(acc, obj));
+    }
+
+    const doc = objectify(this._doc.toObject());
+    return Object.assign(resource, doc);
   }
 }
 
@@ -101,14 +129,6 @@ export class CollectionResource extends Resource {
   constructor(private _res: DocumentResource[], ...links: Link[]) {
     super();
     this._links.push(...links);
-  }
-
-  /**
-   *
-   */
-  toXml(): string {
-    const xml = xmlify(this._res.map(res => res.toObject()), this.title);
-    return xml;
   }
 
   /**
