@@ -46,6 +46,7 @@ router.get("/:file", auth.optional, function (req: Request, res: Response, next:
   res.set({
     "ETag": req.media.md5,
     "Content-Type": req.media.contentType,
+    "Content-Length": req.media.length,
     "Content-Disposition": req.query.download ? `attachment; filename="${req.media.filename}"` : "inline",
   });
 
