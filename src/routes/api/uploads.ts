@@ -2,12 +2,11 @@ import express = require("express");
 import httpStatus = require("http-status");
 
 import { Link, LinkRel } from "../../Link";
-import { CollectionResource, DocumentResource } from "../../Resource";
+import { CollectionResource, DocumentResource, ObjectResource } from "../../Resource";
 import { Upload, IUpload } from "../../models/Upload";
-import { Comment, IComment } from "../../models/Comment";
-import { User, IUser } from "../../models/User";
+import { Comment } from "../../models/Comment";
+import { User } from "../../models/User";
 import { Tag, ITag } from "../../models/Tag";
-import { File, IFile } from "../../models/File";
 
 import { paginationParams, check, validationResult, Validator } from "../../concerns/Validator";
 import { IVote } from "../../concerns/Voting";
@@ -65,7 +64,8 @@ router.post("/", auth.required, async (req: express.Request, res: express.Respon
 // Preload upload objects on routes with ":upload"
 router.param("upload", async (req: express.Request, res: express.Response, next: express.NextFunction, id: string) => {
   try {
-    const upload = await Upload.findById(id)
+    const upload = await Upload
+      .findById(id)
       .populate("author", "username")
       .populate("file")
       .populate("tags", ["text", "voting"])
@@ -337,7 +337,6 @@ router.post("/:upload/dependencies",
   });
 
 router.get("/:upload/dependencies", auth.optional, function (req: express.Request, res: express.Response, next: express.NextFunction) {
-  console.log(req.upload.id);
   Upload
     .aggregate([
       {
@@ -349,13 +348,20 @@ router.get("/:upload/dependencies", auth.optional, function (req: express.Reques
           startWith: "$dependencies",
           connectFromField: "dependencies",
           connectToField: "_id",
-          maxDepth: 2,
+          maxDepth: process.env.QUERY_DEPTH || 3,
           as: "dependencies",
+        }
+      },
+      {
+        $project: {
+          "dependencies": true,
+          "_id": false,
         }
       }
     ])
-    .exec(function (err: Error, result: IUpload[]) {
-      res.json(result);
+    .exec(function (err: Error, [doc]: IUpload[]) {
+      res.body = new ObjectResource(doc, new Link("/", "Dependencies", LinkRel.Self));
+      return next();
     });
 });
 export = router;

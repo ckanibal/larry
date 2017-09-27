@@ -26,6 +26,7 @@ export interface IUpload extends Document, Votable {
   pic: IFile;
   file: IFile;
   comments: IComment[];
+  dependencies: IUpload[];
   meta: any;
 }
 

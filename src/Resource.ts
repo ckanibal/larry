@@ -8,8 +8,13 @@ import { Link, LinkRel } from "./Link";
 
 export abstract class Resource {
   protected _links: Link[];
-  get links(): Link[] { return this._links; }
-  set links(newLinks: Link[]) { this._links = newLinks; }
+  get links(): Link[] {
+    return this._links;
+  }
+
+  set links(newLinks: Link[]) {
+    this._links = newLinks;
+  }
 
   get title(): string {
     return this.links.find(l => l.rel == LinkRel.Self).title;
@@ -22,12 +27,12 @@ export abstract class Resource {
   /**
    *
    */
-  toJSON({ pretty }: { pretty?: string }): string {
+  toJSON({pretty}: { pretty?: string }): string {
     let indentLevel: number = 0;
     if (pretty !== undefined) {
       indentLevel = parseInt(pretty) || 2;
     }
-    return JSON.stringify (this.toObject(), undefined, indentLevel);
+    return JSON.stringify(this.toObject(), undefined, indentLevel);
   }
 
   /**
@@ -39,12 +44,43 @@ export abstract class Resource {
       .create(title, {
         separateArrayItems: false,
       })
-      .ele(this.toObject({ replaceKeys: true, wrapArrays: false }))
+      .ele(this.toObject({replaceKeys: true, wrapArrays: false, xml: true}))
       .end();
     return xml;
   }
 
-  toObject({ replaceKeys = false, wrapArrays = false } = { }) {
+  protected objectify(value: any, {replaceKeys = false, wrapArrays = false} = {}) {
+    if (!util.isPrimitive(value)) {
+      // console.log("non primitive:", value, "type:", typeof value);
+      if (value instanceof Types.ObjectId || value instanceof Schema.Types.ObjectId) {
+        value = value.toString();
+      } else if (value instanceof Date) {
+        value = value.toISOString();
+      } else if (util.isArray(value)) {
+        value = value.map((val: any) => this.objectify(val, {replaceKeys, wrapArrays}));
+      } else if (util.isBuffer(value)) {
+        value = value.toString("hex");
+      } else {
+        value = Object.entries(value).map(([key, value]) => {
+          if (replaceKeys) {
+            key = key.replace(/^_/, "@");
+          }
+          if (util.isArray(value)) {
+            key = pluralize.singular(key);
+          }
+          if (wrapArrays && util.isArray(value)) {
+            value = value.map((val: any) => ({[pluralize.singular(key)]: val} ));
+          }
+          value = this.objectify(value);
+          return {[key]: value};
+        }).reduce((acc, obj) => Object.assign(acc, obj));
+      }
+      // console.log(" => resolved: ", value);
+    }
+    return value;
+  }
+
+  toObject({replaceKeys = false, wrapArrays = false, xml = false} = {}) {
     // prepare links
     const _links = this.links.filter(l => l)
       .map(link => ({
@@ -55,7 +91,7 @@ export abstract class Resource {
       }))
       .reduce((acc, cur) => Object.assign(acc, cur), {});
 
-    return { _links };
+    return {_links};
   }
 }
 
@@ -77,41 +113,9 @@ export class DocumentResource extends Resource {
   /**
    *
    */
-  toObject({ replaceKeys = false, wrapArrays = false }) {
+  toObject(options?: Object) {
     const resource = super.toObject();
-
-    function objectify (value: any) {
-      if (!util.isPrimitive(value)) {
-        // console.log("non primitive:", value, "type:", typeof value);
-        if (value instanceof Types.ObjectId || value instanceof Schema.Types.ObjectId) {
-          value = value.toString();
-        } else if (value instanceof Date) {
-          value = value.toISOString();
-        } else if (util.isArray(value)) {
-          value = value.map(objectify);
-        } else if (util.isBuffer(value)) {
-          value = value.toString("hex");
-        } else {
-          value = Object.entries(value).map(([key, value]) => {
-            if (replaceKeys) {
-              key = key.replace(/^_/, "@");
-            }
-            if (util.isArray(value)) {
-              key = pluralize.singular(key);
-            }
-            if (wrapArrays && util.isArray(value)) {
-              value = value.map((val: any) => ({[pluralize.singular(key)]: val} ));
-            }
-            value = objectify(value);
-            return { [key]: value };
-          }).reduce((acc, obj) => Object.assign(acc, obj));
-        }
-        // console.log(" => resolved: ", value);
-      }
-      return value;
-    }
-
-    const doc = objectify(this._doc.toObject());
+    const doc = this.objectify(this._doc.toObject(), options);
     return Object.assign(resource, doc);
   }
 }
@@ -119,8 +123,13 @@ export class DocumentResource extends Resource {
 export class CollectionResource extends Resource {
   protected _meta: any;
 
-  get meta(): any { return this._meta; }
-  set meta(newMeta: any) { this._meta = newMeta; }
+  get meta(): any {
+    return this._meta;
+  }
+
+  set meta(newMeta: any) {
+    this._meta = newMeta;
+  }
 
   /**
    *
@@ -137,22 +146,41 @@ export class CollectionResource extends Resource {
   /**
    *
    */
-  toObject({ replaceKeys = false, wrapArrays = false } = { }) {
+  toObject({replaceKeys = false, wrapArrays = false, xml = false} = {}) {
     const resource = super.toObject();
 
     // children
-    const children = this._res.map(res => res.toObject({ replaceKeys, wrapArrays }));
+    const children = this._res.map(res => res.toObject({replaceKeys, wrapArrays}));
 
     /*
-    if (wrapArrays) {
-      children = children.map (child => ({ [pluralize.singular(this.title)]: child}));
-    }
-    */
+     if (wrapArrays) {
+     children = children.map (child => ({ [pluralize.singular(this.title)]: child}));
+     }
+     */
 
     return Object.assign(resource, {
       _meta: this._meta,
-      [pluralize.singular(this.title)]: children,
+      [xml ? pluralize.singular(this.title) : this.title]: children,
     });
+  }
+}
+
+export class ObjectResource extends Resource {
+  /**
+   *
+   * @param _obj
+   */
+  constructor(private _obj: Object, ...links: Link[]) {
+    super(_obj, ...links);
+    this._links.push(...links);
+  }
+
+  /**
+   * Serialize object
+   */
+  toObject(options: Object) {
+    const resource = super.toObject(options);
+    return Object.assign(resource, this.objectify(this._obj, options));
   }
 }
 
