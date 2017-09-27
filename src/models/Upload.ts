@@ -8,7 +8,7 @@ import slug = require("slug");
 import { User, IUser } from "./User";
 import { Comment, IComment } from "./Comment";
 import { File, IFile } from "./File";
-import { Tag, ITag } from "./Tag";
+import { Tag, ITag, TagSchema } from "./Tag";
 
 import { votingPlugin, Votable } from "../concerns/Voting";
 
@@ -56,7 +56,10 @@ const UploadSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: User.modelName
   },
-  tags: [Tag.schema],
+  tags: [{
+    type: Schema.Types.ObjectId,
+    ref: Tag.modelName
+  }],
   pic: {
     type: Schema.Types.ObjectId,
     ref: File.modelName

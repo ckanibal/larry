@@ -6,9 +6,10 @@ import { CollectionResource, DocumentResource } from "../../Resource";
 import { Upload, IUpload } from "../../models/Upload";
 import { Comment, IComment } from "../../models/Comment";
 import { User, IUser } from "../../models/User";
+import { Tag, ITag } from "../../models/Tag";
 import { File, IFile } from "../../models/File";
 
-import { paginationParams, check, validationResult } from "../../concerns/Validator";
+import { paginationParams, check, validationResult, Validator } from "../../concerns/Validator";
 import { IVote } from "../../concerns/Voting";
 import auth = require("../../config/auth");
 
@@ -40,6 +41,7 @@ router.get("/", auth.optional, paginationParams,
           foo: undefined
         }
       };
+
       res.body = resource;
       return next();
     });
@@ -64,7 +66,11 @@ router.post("/", auth.required, async (req: express.Request, res: express.Respon
 // Preload upload objects on routes with ":upload"
 router.param("upload", async (req: express.Request, res: express.Response, next: express.NextFunction, id: string) => {
   try {
-    const upload = await Upload.findById(id).populate("author", "username").populate("file").exec();
+    const upload = await Upload.findById(id)
+      .populate("author", "username")
+      .populate("file")
+      .populate("tags", ["text", "voting"])
+      .exec();
     console.log(upload);
     if (!upload) {
       return res.sendStatus(httpStatus.NOT_FOUND);
@@ -115,13 +121,17 @@ router.delete("/:upload", auth.required, (req: express.Request, res: express.Res
   }
 });
 
+
+/**
+ * Votes
+ */
 // vote an upload
 router.put("/:upload/vote",
   auth.required,
   check("vote.impact").isInt(),
   function (req: express.Request, res: express.Response, next: express.NextFunction) {
     validationResult(req).throw();
-    const { impact: _impact } = req.body.vote;
+    const {impact: _impact} = req.body.vote;
 
     User.findById(req.user.id, function (err, user) {
       if (!user) {
@@ -135,6 +145,49 @@ router.put("/:upload/vote",
           res.json(vote);
         }
       });
+    });
+  });
+
+
+/**
+ * Tags
+ */
+// tag an upload
+router.post("/:upload/tags",
+  auth.required,
+  function (req: express.Request, res: express.Response, next: express.NextFunction) {
+    const { text } = req.body.tag;
+    User.findById(req.user.id, function (err, user) {
+      if (!user) {
+        return res.sendStatus(httpStatus.UNAUTHORIZED);
+      }
+      if (req.upload.tags.find((tag: ITag) => tag.text.toLowerCase() === text.toLowerCase())) {
+        // already tagged!
+        res.status(httpStatus.CONFLICT);
+        res.json(req.upload);
+      } else {
+        Tag.create({
+          text,
+          author: user,
+          ref: {
+            document: req.upload,
+            model: Upload.modelName
+          },
+        }, (err: Error, tag: ITag) => {
+          if (err) {
+            return next(err);
+          } else {
+            req.upload.tags.push(tag);
+            req.upload.save(function(err: Error) {
+              if (err) {
+                return next(err);
+              } else {
+                res.json(req.upload);
+              }
+            });
+          }
+        });
+      }
     });
   });
 

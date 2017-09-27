@@ -1,6 +1,7 @@
 import { Document, Schema, Types } from "mongoose";
 import * as util from "util";
 import xmlbuilder = require("xmlbuilder");
+import pluralize = require("pluralize");
 
 import { Link, LinkRel } from "./Link";
 
@@ -33,9 +34,11 @@ export abstract class Resource {
    * Converts a object to XML
    * @returns {string}
    */
-  toXml(): string {
+  toXml(title: string = this.title): string {
     const xml = xmlbuilder
-      .create(this.title)
+      .create(title, {
+        // separateArrayItems: true,
+      })
       .ele(this.toObject(true))
       .end();
     return xml;
@@ -61,14 +64,6 @@ export abstract class Resource {
  *
  */
 export class DocumentResource extends Resource {
-
-  /**
-   *
-   */
-  protected _children?: DocumentResource[];
-  get children(): DocumentResource[] { return this._children; }
-  set children(newChildren: DocumentResource[]) { this._children = newChildren; }
-
   /**
    *
    * @param _doc
@@ -98,7 +93,7 @@ export class DocumentResource extends Resource {
           } else if (value instanceof Date) {
             value = value.toISOString();
           } else if (util.isArray(value)) {
-            value = value.map(objectify);
+            value = value.map(objectify).map(val => ({ [pluralize.singular(key)]: val } ));
           } else {
             value = objectify(value);
           }
@@ -115,6 +110,7 @@ export class DocumentResource extends Resource {
 
 export class CollectionResource extends Resource {
   protected _meta: any;
+
   get meta(): any { return this._meta; }
   set meta(newMeta: any) { this._meta = newMeta; }
 
@@ -141,7 +137,7 @@ export class CollectionResource extends Resource {
 
     return Object.assign(resource, {
       _meta: this._meta,
-      [this.title]: children,
+      [pluralize.singular(this.title)]: children,
     });
   }
 }

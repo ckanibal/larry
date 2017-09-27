@@ -9,6 +9,7 @@ declare module Express {
     upload?: any;
     comment?: any;
     media?: any;
+    tag?: any;
   }
 
   interface Response {

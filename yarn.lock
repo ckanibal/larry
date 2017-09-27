@@ -159,6 +159,10 @@
   dependencies:
     "@types/express" "*"
 
+"@types/pluralize@^0.0.27":
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/@types/pluralize/-/pluralize-0.0.27.tgz#087354a791ce027db1101ff399db6111fc9275f7"
+
 "@types/redis@*":
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/@types/redis/-/redis-2.6.0.tgz#7f01fdec1ba353e9ce7e8439807a43de61760c53"
