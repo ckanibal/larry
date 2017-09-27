@@ -39,7 +39,7 @@ export abstract class Resource {
       .create(title, {
         // separateArrayItems: true,
       })
-      .ele(this.toObject({ replaceKeys: true }))
+      .ele(this.toObject({ replaceKeys: true, wrapArrays: true }))
       .end();
     return xml;
   }
@@ -80,32 +80,33 @@ export class DocumentResource extends Resource {
   toObject({ replaceKeys = false, wrapArrays = false }) {
     const resource = super.toObject();
 
-    function objectify (obj: Object) {
-      console.log("objectify", obj, typeof obj);
-      return Object.entries(obj).map(([key, value]) => {
-        if (replaceKeys) {
-          key = key.replace(/^_/, "@");
-        }
-        if (!util.isPrimitive(value)) {
-          console.log("non primitive:", key, value, "type:", typeof value);
-          if (value instanceof Types.ObjectId || value instanceof Schema.Types.ObjectId) {
-            value = value.toString();
-          } else if (value instanceof Date) {
-            value = value.toISOString();
-          } else if (util.isArray(value)) {
-            value = value.map(el => el.toString());
-            if (wrapArrays) {
-              value = value.map((val: string) => ({[pluralize.singular(key)]: val} ));
+    function objectify (value: any) {
+      if (!util.isPrimitive(value)) {
+        console.log("non primitive:", value, "type:", typeof value);
+        if (value instanceof Types.ObjectId || value instanceof Schema.Types.ObjectId) {
+          value = value.toString();
+        } else if (value instanceof Date) {
+          value = value.toISOString();
+        } else if (util.isArray(value)) {
+          value = value.map(objectify);
+        } else if (util.isBuffer(value)) {
+          value = value.toString("hex");
+        } else {
+          value = Object.entries(value).map(([key, value]) => {
+            if (replaceKeys) {
+              key = key.replace(/^_/, "@");
             }
-          } else if (util.isBuffer(value)) {
-            value = value.toString("hex");
-          } else {
+            if (wrapArrays && util.isArray(value)) {
+              console.log("array: ", key, value);
+              value = value.map((val: any) => ({[pluralize.singular(key)]: val} ));
+            }
             value = objectify(value);
-          }
-          console.log(" => resolved: ", value);
+            return { [key]: value };
+          }).reduce((acc, obj) => Object.assign(acc, obj));
         }
-        return { [key]: value };
-      }).reduce((acc, obj) => Object.assign(acc, obj));
+        console.log(" => resolved: ", value);
+      }
+      return value;
     }
 
     const doc = objectify(this._doc.toObject());
@@ -138,7 +139,7 @@ export class CollectionResource extends Resource {
     const resource = super.toObject();
 
     // children
-    const children = this._res.map(res => res.toObject({ replaceKeys: true }));
+    const children = this._res.map(res => res.toObject({ replaceKeys, wrapArrays }));
 
     return Object.assign(resource, {
       _meta: this._meta,
