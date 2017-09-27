@@ -39,12 +39,12 @@ export abstract class Resource {
       .create(title, {
         // separateArrayItems: true,
       })
-      .ele(this.toObject(true))
+      .ele(this.toObject({ replaceKeys: true }))
       .end();
     return xml;
   }
 
-  protected toObject(replaceKeys: boolean = false) {
+  toObject({ replaceKeys = false, wrapArrays = false } = { }) {
     // prepare links
     const _links = this.links.filter(l => l)
       .map(link => ({
@@ -77,27 +77,32 @@ export class DocumentResource extends Resource {
   /**
    *
    */
-  toObject(replaceKeys: boolean = false) {
+  toObject({ replaceKeys = false, wrapArrays = false }) {
     const resource = super.toObject();
 
     function objectify (obj: Object) {
-      // console.log("objectify", obj, typeof obj);
+      console.log("objectify", obj, typeof obj);
       return Object.entries(obj).map(([key, value]) => {
         if (replaceKeys) {
           key = key.replace(/^_/, "@");
         }
         if (!util.isPrimitive(value)) {
-          // console.log("non primitive:", key, value, "type:", typeof value);
-          if (value instanceof Types.ObjectId) {
+          console.log("non primitive:", key, value, "type:", typeof value);
+          if (value instanceof Types.ObjectId || value instanceof Schema.Types.ObjectId) {
             value = value.toString();
           } else if (value instanceof Date) {
             value = value.toISOString();
           } else if (util.isArray(value)) {
-            value = value.map(objectify).map(val => ({ [pluralize.singular(key)]: val } ));
+            value = value.map(el => el.toString());
+            if (wrapArrays) {
+              value = value.map((val: string) => ({[pluralize.singular(key)]: val} ));
+            }
+          } else if (util.isBuffer(value)) {
+            value = value.toString("hex");
           } else {
             value = objectify(value);
           }
-          // console.log(" => resolved: ", value);
+          console.log(" => resolved: ", value);
         }
         return { [key]: value };
       }).reduce((acc, obj) => Object.assign(acc, obj));
@@ -129,11 +134,11 @@ export class CollectionResource extends Resource {
   /**
    *
    */
-  toObject(replaceKeys: boolean = false) {
+  toObject({ replaceKeys = false, wrapArrays = false } = { }) {
     const resource = super.toObject();
 
     // children
-    const children = this._res.map(res => res.toObject(replaceKeys));
+    const children = this._res.map(res => res.toObject({ replaceKeys: true }));
 
     return Object.assign(resource, {
       _meta: this._meta,
