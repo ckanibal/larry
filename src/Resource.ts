@@ -37,9 +37,9 @@ export abstract class Resource {
   toXml(title: string = this.title): string {
     const xml = xmlbuilder
       .create(title, {
-        separateArrayItems: true,
+        separateArrayItems: false,
       })
-      .ele(this.toObject({ replaceKeys: true, wrapArrays: true }))
+      .ele(this.toObject({ replaceKeys: true, wrapArrays: false }))
       .end();
     return xml;
   }
@@ -96,6 +96,9 @@ export class DocumentResource extends Resource {
             if (replaceKeys) {
               key = key.replace(/^_/, "@");
             }
+            if (util.isArray(value)) {
+              key = pluralize.singular(key);
+            }
             if (wrapArrays && util.isArray(value)) {
               value = value.map((val: any) => ({[pluralize.singular(key)]: val} ));
             }
@@ -138,11 +141,13 @@ export class CollectionResource extends Resource {
     const resource = super.toObject();
 
     // children
-    let children = this._res.map(res => res.toObject({ replaceKeys, wrapArrays }));
+    const children = this._res.map(res => res.toObject({ replaceKeys, wrapArrays }));
 
+    /*
     if (wrapArrays) {
       children = children.map (child => ({ [pluralize.singular(this.title)]: child}));
     }
+    */
 
     return Object.assign(resource, {
       _meta: this._meta,

@@ -38,7 +38,6 @@ router.get("/", auth.optional, paginationParams,
           limit,
           page,
           pages,
-          foo: undefined
         }
       };
 
@@ -191,6 +190,9 @@ router.post("/:upload/tags",
     });
   });
 
+/**
+ * Favourites
+ */
 // Favorite an article
 router.post("/:article/favorite", auth.required, function (req, res, next) {
   /*
@@ -229,6 +231,11 @@ router.delete("/:article/favorite", auth.required, function (req, res, next) {
   }).catch(next);
   */
 });
+
+
+/**
+ * Comments
+ */
 
 // return an upload's comments
 router.get("/:upload/comments", auth.optional, paginationParams, function (req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -296,4 +303,59 @@ router.delete("/:article/comments/:comment", auth.required, (req: express.Reques
 });
 
 
+/**
+ * Dependencies
+ */
+// add a dependency
+router.post("/:upload/dependencies",
+  auth.required,
+  function (req: express.Request, res: express.Response, next: express.NextFunction) {
+    const { id } = req.body.dependency;
+    User.findById(req.user.id, function (err, user) {
+      if (!user) {
+        return res.sendStatus(httpStatus.UNAUTHORIZED);
+      }
+      if (req.user.id === user.id) {
+        Upload.findById(id, function (err: Error, upload: IUpload) {
+          if (err) {
+            return next(err);
+          } else {
+            req.upload.dependencies.push(upload);
+            req.upload.save(function(err: Error) {
+              if (err) {
+                return next(err);
+              } else {
+                res.json(req.upload);
+              }
+            });
+          }
+        });
+      } else {
+        return res.sendStatus(httpStatus.FORBIDDEN);
+      }
+    });
+  });
+
+router.get("/:upload/dependencies", auth.optional, function (req: express.Request, res: express.Response, next: express.NextFunction) {
+  console.log(req.upload.id);
+  Upload
+    .aggregate([
+      {
+        $match: {_id: req.upload._id}
+      },
+      {
+        $graphLookup: {
+          from: Upload.collection.collectionName,
+          startWith: "$dependencies",
+          connectFromField: "dependencies",
+          connectToField: "_id",
+          maxDepth: 2,
+          as: "dependencies",
+        }
+      }
+    ])
+    .exec(function (err: Error, result: IUpload[]) {
+      res.json(result);
+    });
+});
 export = router;

@@ -68,6 +68,10 @@ const UploadSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: File.modelName
   },
+  dependencies: [{
+    type: Schema.Types.ObjectId,
+    ref: "Upload",
+  }]
 }, {
   timestamps: true
 });
