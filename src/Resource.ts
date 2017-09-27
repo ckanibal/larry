@@ -37,7 +37,7 @@ export abstract class Resource {
   toXml(title: string = this.title): string {
     const xml = xmlbuilder
       .create(title, {
-        // separateArrayItems: true,
+        separateArrayItems: true,
       })
       .ele(this.toObject({ replaceKeys: true, wrapArrays: true }))
       .end();
@@ -82,7 +82,7 @@ export class DocumentResource extends Resource {
 
     function objectify (value: any) {
       if (!util.isPrimitive(value)) {
-        console.log("non primitive:", value, "type:", typeof value);
+        // console.log("non primitive:", value, "type:", typeof value);
         if (value instanceof Types.ObjectId || value instanceof Schema.Types.ObjectId) {
           value = value.toString();
         } else if (value instanceof Date) {
@@ -97,14 +97,13 @@ export class DocumentResource extends Resource {
               key = key.replace(/^_/, "@");
             }
             if (wrapArrays && util.isArray(value)) {
-              console.log("array: ", key, value);
               value = value.map((val: any) => ({[pluralize.singular(key)]: val} ));
             }
             value = objectify(value);
             return { [key]: value };
           }).reduce((acc, obj) => Object.assign(acc, obj));
         }
-        console.log(" => resolved: ", value);
+        // console.log(" => resolved: ", value);
       }
       return value;
     }
@@ -139,7 +138,11 @@ export class CollectionResource extends Resource {
     const resource = super.toObject();
 
     // children
-    const children = this._res.map(res => res.toObject({ replaceKeys, wrapArrays }));
+    let children = this._res.map(res => res.toObject({ replaceKeys, wrapArrays }));
+
+    if (wrapArrays) {
+      children = children.map (child => ({ [pluralize.singular(this.title)]: child}));
+    }
 
     return Object.assign(resource, {
       _meta: this._meta,
