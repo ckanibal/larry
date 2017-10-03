@@ -13,6 +13,7 @@ export interface IVote extends Document {
   ref: {
     model: string,
     document: Document,
+    required: true,
   };
 }
 
