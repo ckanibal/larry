@@ -24,7 +24,10 @@ router.get("/", auth.optional, paginationParams,
         sort,
         page: +_page,
         limit: +_limit,
-        populate: [{path: "author", select: "username"}],
+        populate: [
+          {path: "author", select: "username"},
+          {path: "tags", select: "text"}
+        ],
       }
     ).then(({docs: uploads, total, limit, page, pages}) => {
       const resource = new CollectionResource(
@@ -68,7 +71,7 @@ router.param("upload", async (req: express.Request, res: express.Response, next:
       .findById(id)
       .populate("author", "username")
       .populate("file")
-      .populate("tags", ["text", "voting"])
+      .populate("tags", "text")
       .exec();
     console.log(upload);
     if (!upload) {
@@ -155,7 +158,7 @@ router.put("/:upload/vote",
 router.post("/:upload/tags",
   auth.required,
   function (req: express.Request, res: express.Response, next: express.NextFunction) {
-    const { text } = req.body.tag;
+    const {text} = req.body.tag;
     User.findById(req.user.id, function (err, user) {
       if (!user) {
         return res.sendStatus(httpStatus.UNAUTHORIZED);
@@ -177,7 +180,7 @@ router.post("/:upload/tags",
             return next(err);
           } else {
             req.upload.tags.push(tag);
-            req.upload.save(function(err: Error) {
+            req.upload.save(function (err: Error) {
               if (err) {
                 return next(err);
               } else {
@@ -196,40 +199,40 @@ router.post("/:upload/tags",
 // Favorite an article
 router.post("/:article/favorite", auth.required, function (req, res, next) {
   /*
-  var articleId = req.article._id;
+   var articleId = req.article._id;
 
-  User.findById(req.payload.id).then(function (user) {
-    if (!user) {
-      return res.sendStatus(401);
-    }
+   User.findById(req.payload.id).then(function (user) {
+   if (!user) {
+   return res.sendStatus(401);
+   }
 
-    return user.favorite(articleId).then(function () {
-      return req.article.updateFavoriteCount().then(function (article) {
-        return res.json({article: article.toJSONFor(user)});
-      });
-    });
-  }).catch(next);
-  */
+   return user.favorite(articleId).then(function () {
+   return req.article.updateFavoriteCount().then(function (article) {
+   return res.json({article: article.toJSONFor(user)});
+   });
+   });
+   }).catch(next);
+   */
 });
 
 
 // Unfavorite an article
 router.delete("/:article/favorite", auth.required, function (req, res, next) {
   /*
-  var articleId = req.article._id;
+   var articleId = req.article._id;
 
-  User.findById(req.payload.id).then(function (user) {
-    if (!user) {
-      return res.sendStatus(401);
-    }
+   User.findById(req.payload.id).then(function (user) {
+   if (!user) {
+   return res.sendStatus(401);
+   }
 
-    return user.unfavorite(articleId).then(function () {
-      return req.article.updateFavoriteCount().then(function (article) {
-        return res.json({article: article.toJSONFor(user)});
-      });
-    });
-  }).catch(next);
-  */
+   return user.unfavorite(articleId).then(function () {
+   return req.article.updateFavoriteCount().then(function (article) {
+   return res.json({article: article.toJSONFor(user)});
+   });
+   });
+   }).catch(next);
+   */
 });
 
 
@@ -241,7 +244,12 @@ router.delete("/:article/favorite", auth.required, function (req, res, next) {
 router.get("/:upload/comments", auth.optional, paginationParams, function (req: express.Request, res: express.Response, next: express.NextFunction) {
   const {query: {limit: _limit = "50", _sort = {createdAt: "desc"}, page: _page = "1"}} = req;
 
-  Comment.paginate({ upload: req.upload.id }, {page: +_page, limit: +_limit, sort: _sort, populate: "author.username"}, function (err, result) {
+  Comment.paginate({upload: req.upload.id}, {
+    page: +_page,
+    limit: +_limit,
+    sort: _sort,
+    populate: "author.username"
+  }, function (err, result) {
     if (err) {
       return next(err);
     } else {
@@ -290,7 +298,7 @@ router.param("comment", async (req: express.Request, res: express.Response, next
 // delete a comment
 router.delete("/:article/comments/:comment", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (req.comment.author.toString() === req.user.id.toString()) {
-    req.comment.delete(function(err: Error) {
+    req.comment.delete(function (err: Error) {
       if (err) {
         next(err);
       } else {
@@ -310,7 +318,7 @@ router.delete("/:article/comments/:comment", auth.required, (req: express.Reques
 router.post("/:upload/dependencies",
   auth.required,
   function (req: express.Request, res: express.Response, next: express.NextFunction) {
-    const { id } = req.body.dependency;
+    const {id} = req.body.dependency;
     User.findById(req.user.id, function (err, user) {
       if (!user) {
         return res.sendStatus(httpStatus.UNAUTHORIZED);
@@ -321,7 +329,7 @@ router.post("/:upload/dependencies",
             return next(err);
           } else {
             req.upload.dependencies.push(upload);
-            req.upload.save(function(err: Error) {
+            req.upload.save(function (err: Error) {
               if (err) {
                 return next(err);
               } else {

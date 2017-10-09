@@ -25,7 +25,6 @@ router.post("/", auth.required, function(req: Request, res: Response, next: Next
 
     Vote.create(req.body.vote, function (err: Error, vote: IVote) {
       if (err) {
-        console.log(err);
         return next(err);
       } else {
         // saved!

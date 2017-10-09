@@ -3,11 +3,12 @@
 import { mongoose } from "../config/database";
 import { Schema, Model, Document, PaginateModel } from "mongoose";
 import mongoosePaginate = require("mongoose-paginate");
+import { votingPlugin, Votable } from "../concerns/Voting";
 
 import { IUser } from "./User";
 import { IUpload } from "./Upload";
 
-export interface IComment extends Document {
+export interface IComment extends Document, Votable {
   body: string;
   author: IUser;
   upload: IUpload;
@@ -35,5 +36,14 @@ const CommentSchema = new mongoose.Schema({
   timestamps: true
 });
 CommentSchema.plugin(mongoosePaginate);
+CommentSchema.plugin(votingPlugin, {
+  validate: {
+    validator: function (v: number) {
+      return [-1, +1].includes(v);
+    },
+    message: "Vote must be +/- 1 (at least for now)"
+  }
+});
+
 
 export const Comment = mongoose.model<IComment>("Comment", CommentSchema) as ICommentModel;
