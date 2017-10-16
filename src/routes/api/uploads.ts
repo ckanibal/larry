@@ -6,7 +6,7 @@ import { CollectionResource, DocumentResource, ObjectResource } from "../../Reso
 import { Upload, IUpload } from "../../models/Upload";
 import { Comment } from "../../models/Comment";
 import { User } from "../../models/User";
-import { Tag, ITag } from "../../models/Tag";
+import { ITag } from "../../models/Tag";
 
 import { paginationParams, check, validationResult, Validator } from "../../concerns/Validator";
 import { IVote } from "../../concerns/Voting";
@@ -163,30 +163,20 @@ router.post("/:upload/tags",
       if (!user) {
         return res.sendStatus(httpStatus.UNAUTHORIZED);
       }
-      if (req.upload.tags.find((tag: ITag) => tag.text.toLowerCase() === text.toLowerCase())) {
+      if (req.upload.tags.find((tag: ITag) => tag.text.toLowerCase().localeCompare(text.toLowerCase()) === 0)) {
         // already tagged!
         res.status(httpStatus.CONFLICT);
         res.json(req.upload);
       } else {
-        Tag.create({
+        req.upload.tags.push({
           text,
-          author: user,
-          ref: {
-            document: req.upload,
-            model: Upload.modelName
-          },
-        }, (err: Error, tag: ITag) => {
+          author: user
+        });
+        req.upload.save((err: Error, doc: IUpload) => {
           if (err) {
             return next(err);
           } else {
-            req.upload.tags.push(tag);
-            req.upload.save(function (err: Error) {
-              if (err) {
-                return next(err);
-              } else {
-                res.json(req.upload);
-              }
-            });
+            res.json(doc);
           }
         });
       }

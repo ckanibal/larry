@@ -25,4 +25,12 @@ declare module Express {
 
 declare module "mongoose" {
   export let gfs: any;
+
+  interface Schema {
+    options: {
+      toObject: {
+        transform?: Function,
+      }
+    }
+  }
 }

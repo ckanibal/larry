@@ -1,8 +1,11 @@
 // models/Tag.ts
 
+import slug = require("slug");
 import { Schema, Model, Document } from "mongoose";
 import { mongoose } from "../config/database";
 import { votingPlugin, Votable } from "../concerns/Voting";
+import { IUser } from "./User";
+import { IUpload } from "./Upload";
 
 /**
  * Tag Model
@@ -10,11 +13,9 @@ import { votingPlugin, Votable } from "../concerns/Voting";
 
 export interface ITag extends Document, Votable {
   text: string;
-  author: {};
-  ref: {
-    model: string,
-    document: Document,
-  };
+  slug: string;
+  author: IUser;
+  upload: IUpload;
 }
 
 export interface ITagModel extends Model<ITag> {
@@ -31,21 +32,32 @@ export const TagSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  slug: {
+    type: Schema.Types.String
+  },
   author: {
     type: Schema.Types.ObjectId,
     ref: "User"
   },
-  ref: {
-    model: Schema.Types.String,
-    document: {
-      type: Schema.Types.ObjectId,
-      refPath: "ref.model",
-      required: true
-    },
+  upload: {
+    type: Schema.Types.ObjectId,
+    ref: "Upload"
   },
 }, {
   timestamps: true
 });
+
+TagSchema.pre("validate", function (next) {
+  if (!this.slug) {
+    this.slugify();
+  }
+
+  next();
+});
+
+TagSchema.methods.slugify = function () {
+  this.slug = slug(this.text);
+};
 
 TagSchema.set("toObject", {
   transform: function(doc: Document, ret: ITag, options: {}) {

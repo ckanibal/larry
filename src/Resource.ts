@@ -73,7 +73,7 @@ export abstract class Resource {
           }
           value = this.objectify(value);
           return {[key]: value};
-        }).reduce((acc, obj) => Object.assign(acc, obj));
+        }).reduce((acc, obj) => Object.assign(acc, obj), {});
       }
       // console.log(" => resolved: ", value);
     }

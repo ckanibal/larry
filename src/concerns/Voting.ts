@@ -1,6 +1,6 @@
 // concerns/Voting.ts
 
-import { Schema, Model, model, Document, Types } from "mongoose";
+import { Schema, Model, model, Document, Types, PaginateModel } from "mongoose";
 import httpStatus = require("http-status");
 
 /**
@@ -18,7 +18,8 @@ export interface IVote extends Document {
 }
 
 
-export interface IVoteModel extends Model<IVote> {
+export interface IVoteModel extends PaginateModel<IVote> {
+  register(modelName: any): void;
 }
 
 
@@ -38,7 +39,20 @@ const VoteSchema = new Schema({
 }, {timestamps: true});
 VoteSchema.index({author: 1, "ref.document": 1}, {unique: true});
 
-VoteSchema.pre("save", true, function (next, done) {
+
+VoteSchema.methods.updateReferenced = function (next: Function, done: Function) {
+  /*
+  This method is quite tricky; it updates the voting sum on the document specified by the ref-attribute
+  However, since the referenced document might also be a subdocument of another document, it is not sufficient to just
+  use the $lookup-Operator on the dynamic ref; we need to figure out the parent document ourselves, using the model path:
+  f.e.: ref.model == "Upload.tags" => Collection Upload, Query tags by ref.document (ObjectId)
+
+  the positional $-Operator is a excellent tool for this use-casey
+
+  == Update ==
+  - Remove ability to vote on subdocuments
+ */
+
   this.populate("ref.document", function (err: Error, vote: IVote) {
     if (!err) {
       next();
@@ -60,31 +74,16 @@ VoteSchema.pre("save", true, function (next, done) {
       next(err);
     }
   });
+};
+
+VoteSchema.pre("save", true, function (next, done) {
+  this.updateReferenced(next, done);
 });
 
 VoteSchema.pre("remove", true, function (next, done) {
   // undo vote impact
-  this.populate("ref.document", function (err: Error, vote: IVote) {
-    if (!err) {
-      next();
-
-      // update referenced Document
-      vote.ref.document.update({
-        $inc: {
-          "voting.sum": -vote.impact,
-        }
-      }, {}, function (err, raw) {
-        if (!err) {
-          done();
-        } else {
-          // Todo: https://github.com/DefinitelyTyped/DefinitelyTyped/pull/19954
-          (<any>done)(err);
-        }
-      });
-    } else {
-      next(err);
-    }
-  });
+  this.impact = -this.impact;
+  this.updateReferenced(next, done);
 });
 
 export const Vote = model<IVote>("Vote", VoteSchema) as IVoteModel;
@@ -95,12 +94,11 @@ export interface Votable {
     sum: number
   };
 
-  vote(impact: Number): Function;
+  vote(impact: Number, user: Document, cb?: Function): Function;
 }
 
 export function votingPlugin<T extends Document>
 (schema: Schema, options: { user?: Model<T>, validate?: { validator: Function, message?: string } } = {validate: {validator: () => true}}) {
-
   schema.add({
     voting: {
       sum: {
@@ -123,16 +121,10 @@ export function votingPlugin<T extends Document>
                 impact,
                 author: user,
                 ref: {
-                  document: this,
+                  document: this.id,
                   model: this.constructor.modelName // Todo: This is probably not api-safe
                 },
-              }, (err: Error, vote: IVote) => {
-                if (err) {
-                  return cb(err);
-                } else {
-                  return cb(undefined, vote);
-                }
-              });
+              }, cb);
             })
             .catch(reason => cb(reason));
         }

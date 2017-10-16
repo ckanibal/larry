@@ -10,7 +10,7 @@ router.use("/uploads", require("./uploads"));
 router.use("/users", require("./users"));
 router.use("/user", require("./user"));
 router.use("/votes", require("./votes"));
-router.use("/tags", require("./tags"));
+// router.use("/tags", require("./tags"));
 
 /*
 router.use(function(err: Error, req: express.Request, res: express.Response, next: express.NextFunction) {
