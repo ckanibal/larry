@@ -94,7 +94,7 @@ router.get("/:upload", auth.optional, (req: express.Request, res: express.Respon
 // update an upload
 router.put("/:upload", auth.required, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
-    if (req.upload.author._id.toString() === req.user.id.toString()) {
+    if (req.upload.author.id.toString() === req.user.id.toString()) {
       const upload = Object.assign(req.upload, req.body);
       upload.save().then((upload: IUpload) => {
         res.body = new DocumentResource(upload, new Link(`uploads/${upload.id}`, "upload", LinkRel.Self));
@@ -334,11 +334,16 @@ router.post("/:upload/dependencies",
     });
   });
 
+/**
+ * Retrieve the dependency tree
+ */
 router.get("/:upload/dependencies", auth.optional, function (req: express.Request, res: express.Response, next: express.NextFunction) {
   Upload
     .aggregate([
       {
-        $match: {_id: req.upload._id}
+        $match: {
+          _id: req.upload._id
+        }
       },
       {
         $graphLookup: {
@@ -351,15 +356,29 @@ router.get("/:upload/dependencies", auth.optional, function (req: express.Reques
         }
       },
       {
-        $project: {
-          "dependencies": true,
-          "_id": false,
+        $unwind: "$dependencies"
+      }, {
+        $lookup: {
+          from: "fs.files",
+          localField: "dependencies.file",
+          foreignField: "_id",
+          as: "dependencies.file"
+        }
+      }, {
+        $group: {
+          "_id": "$_id",
+          "dependencies": { $push: "$dependencies" }
         }
       }
-    ])
-    .exec(function (err: Error, [doc]: IUpload[]) {
-      res.body = new ObjectResource(doc, new Link("/", "Dependencies", LinkRel.Self));
-      return next();
+])
+    .exec(function (err: Error, docs: IUpload[]) {
+      if (err) {
+        return next(err);
+      } else {
+        const [doc] = docs;
+        res.body = new ObjectResource(doc, new Link("/", "Dependencies", LinkRel.Self));
+        return next();
+      }
     });
 });
 export = router;
