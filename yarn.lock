@@ -86,10 +86,6 @@
   version "0.2.29"
   resolved "https://registry.yarnpkg.com/@types/http-status/-/http-status-0.2.29.tgz#3d7d256a1ca503858c1c6280e6af76df2fcbaa56"
 
-"@types/jest@^20.0.6":
-  version "20.0.7"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-20.0.7.tgz#39cd215db8bda03928dceb933a1e63eb2cbd210e"
-
 "@types/jsonwebtoken@^7.2.3":
   version "7.2.3"
   resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-7.2.3.tgz#483c8f39945e1e6d308dcc51fd4aeca5208d4dca"
@@ -4384,7 +4380,7 @@ supertest@^3.0.0:
     methods "~1.1.2"
     superagent "^3.0.0"
 
-supports-color@4.4.0:
+supports-color@4.4.0, supports-color@^4.0.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-4.4.0.tgz#883f7ddabc165142b2a61427f3352ded195d1a3e"
   dependencies:
@@ -4403,12 +4399,6 @@ supports-color@^3.1.2, supports-color@^3.2.3:
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-3.2.3.tgz#65ac0504b3954171d8a64946b2ae3cbb8a5f54f6"
   dependencies:
     has-flag "^1.0.0"
-
-supports-color@^4.0.0:
-  version "4.2.1"
-  resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-4.2.1.tgz#65a4bb2631e90e02420dba5554c375a4754bb836"
-  dependencies:
-    has-flag "^2.0.0"
 
 symbol-tree@^3.2.1:
   version "3.2.2"

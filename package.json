@@ -64,7 +64,6 @@
     "@types/express-jwt": "^0.0.36",
     "@types/gridfs-stream": "^0.5.29",
     "@types/http-status": "^0.2.29",
-    "@types/jest": "^20.0.6",
     "@types/jsonwebtoken": "^7.2.3",
     "@types/lodash": "^4.14.74",
     "@types/mocha": "^2.2.43",
@@ -118,17 +117,10 @@
     },
     "env": {
       "node": true,
-      "jest": true
+      "mocha": true
     },
     "extends": [
       "eslint:recommended"
-    ],
-    "rules": {
-      "jest/no-focused-tests": 2,
-      "jest/no-identical-title": 2
-    }
-  },
-  "jest": {
-    "testEnvironment": "node"
+    ]
   }
 }
