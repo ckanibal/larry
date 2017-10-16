@@ -75,6 +75,7 @@ router.post("/", auth.required, upload.single("media"), function (req: Request, 
         if (err == undefined) {
           // seems good
           res.body = new DocumentResource(file, new Link(file.id, "File", LinkRel.Self));
+          return next();
         } else {
           res.sendStatus(httpStatus.INTERNAL_SERVER_ERROR);
         }
