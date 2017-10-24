@@ -107,14 +107,14 @@ FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hash
     const blake2b = hashes ? blake2.createHash("blake2b") : undefined;
 
     fs.createReadStream(file.path)
-      .pipe(gridStream)
       .on("data", (chunk: Buffer) => {
         if (hashes) {
           sha1.update(chunk);
           blake2b.update(chunk);
         }
       })
-      .on("error", reject);
+      .on("error", reject)
+      .pipe(gridStream);
 
     gridStream.on("error", reject);
     gridStream.on("close", (file: IFile) => {
