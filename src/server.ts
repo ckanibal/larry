@@ -1,3 +1,5 @@
+// server.ts
+
 import * as express from "express";
 import * as cors from "cors";
 import * as logger from "morgan";
@@ -12,7 +14,6 @@ require("./config/passport");
 /**
  * Controllers (route handlers).
  */
-// import { UploadController } from "./controllers/upload";
 
 /**
  * Server class

@@ -16,7 +16,7 @@ const router = express.Router();
 router.get("/", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
   User.findById(req.user.id).then((user: IUser) => {
     if (!user) {
-      return res.sendStatus(401);
+      return res.sendStatus(httpStatus.FORBIDDEN);
     }
 
     return res.json({user: user.toObject()});

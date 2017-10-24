@@ -25,12 +25,13 @@ const CommentSchema = new mongoose.Schema({
     required: true,
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    type: Schema.Types.Mixed,
+    required: true
   },
   upload: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Upload"
+    ref: "Upload",
+    required: true
   }
 }, {
   timestamps: true

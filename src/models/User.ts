@@ -29,6 +29,8 @@ export interface IUser extends Document {
 
   setPassword(password: string): void;
   validPassword(password: string): boolean;
+  favourite(id: string): Promise<IUpload>;
+  unfavourite(id: string): Promise<IUpload>;
 }
 
 export interface IUserModel extends PaginateModel<IUser> {
@@ -112,7 +114,7 @@ UserSchema.methods.toProfileJSONFor = function (user: any) {
   };
 };
 
-UserSchema.methods.favorite = function (id: number) {
+UserSchema.methods.favourite = function (id: number) {
   if (this.favorites.indexOf(id) === -1) {
     this.favorites.push(id);
   }
@@ -120,7 +122,7 @@ UserSchema.methods.favorite = function (id: number) {
   return this.save();
 };
 
-UserSchema.methods.unfavorite = function (id: number) {
+UserSchema.methods.unfavourite = function (id: number) {
   this.favorites.remove(id);
   return this.save();
 };

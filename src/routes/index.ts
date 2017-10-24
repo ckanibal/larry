@@ -1,3 +1,5 @@
+// routes/index.ts
+
 import express = require("express");
 
 const router = express.Router();

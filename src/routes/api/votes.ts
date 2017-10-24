@@ -9,8 +9,7 @@ import auth = require("../../config/auth");
 const router = Router();
 
 router.get("/", auth.optional, function (req: Request, res: Response, next: NextFunction) {
-  Vote.find().populate("author", "username").exec(function (err: Error, docs: IVote[]) {
-    console.log(err, docs);
+  Vote.find().exec(function (err: Error, docs: IVote[]) {
     res.json(docs);
   });
 });

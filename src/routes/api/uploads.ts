@@ -5,7 +5,7 @@ import { Link, LinkRel } from "../../Link";
 import { CollectionResource, DocumentResource, ObjectResource } from "../../Resource";
 import { Upload, IUpload } from "../../models/Upload";
 import { Comment } from "../../models/Comment";
-import { User } from "../../models/User";
+import { User, IUser } from "../../models/User";
 import { ITag } from "../../models/Tag";
 
 import { paginationParams, check, validationResult, Validator } from "../../concerns/Validator";
@@ -49,18 +49,19 @@ router.get("/", auth.optional, paginationParams,
   }
 );
 
-router.post("/", auth.required, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const user = await User.findById(req.user.id);
-  if (!user) {
-    return res.sendStatus(httpStatus.UNAUTHORIZED);
-  }
+router.post("/", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  User.findById(req.user.id).then((user: IUser) => {
+    if (!user) {
+      return res.sendStatus(httpStatus.UNAUTHORIZED);
+    }
 
-  const upload = new Upload(req.body.upload);
-  upload.author = user;
+    const upload = new Upload(req.body.upload);
+    upload.author = user;
 
-  res.body = upload.save().then(() => {
-    res.body = new DocumentResource(upload, new Link(`upload/${upload.id}`, "upload", LinkRel.Self));
-    return next();
+    res.body = upload.save().then(() => {
+      res.body = new DocumentResource(upload, new Link(`upload/${upload.id}`, "upload", LinkRel.Self));
+      return next();
+    }).catch(next);
   }).catch(next);
 });
 
@@ -186,43 +187,35 @@ router.post("/:upload/tags",
 /**
  * Favourites
  */
-// Favorite an article
-router.post("/:article/favorite", auth.required, function (req, res, next) {
-  /*
-   var articleId = req.article._id;
-
+// Favorite an upload
+router.post("/:upload/favourite", auth.required, function (req, res, next) {
    User.findById(req.payload.id).then(function (user) {
-   if (!user) {
-   return res.sendStatus(401);
-   }
+     if (!user) {
+       return res.sendStatus(httpStatus.UNAUTHORIZED);
+     }
 
-   return user.favorite(articleId).then(function () {
-   return req.article.updateFavoriteCount().then(function (article) {
-   return res.json({article: article.toJSONFor(user)});
-   });
-   });
+     return user.favourite(req.upload.id).then(function () {
+       return req.upload.updateFavoriteCount().then(function (upload: IUpload) {
+         return res.json(req.upload);
+       });
+     });
    }).catch(next);
-   */
 });
 
 
-// Unfavorite an article
-router.delete("/:article/favorite", auth.required, function (req, res, next) {
-  /*
-   var articleId = req.article._id;
+// Unfavourite an upload
+router.delete("/:upload/favourite", auth.required, function (req, res, next) {
+  User.findById(req.payload.id).then(function (user) {
+    if (!user) {
+      return res.sendStatus(httpStatus.UNAUTHORIZED);
+    }
 
-   User.findById(req.payload.id).then(function (user) {
-   if (!user) {
-   return res.sendStatus(401);
-   }
-
-   return user.unfavorite(articleId).then(function () {
-   return req.article.updateFavoriteCount().then(function (article) {
-   return res.json({article: article.toJSONFor(user)});
-   });
-   });
-   }).catch(next);
-   */
+    return user.unfavourite(req.upload.id).then(function () {
+      return req.upload.updateFavoriteCount().then(function (upload: IUpload) {
+        return res.json(req.upload);
+      });
+    });
+  }).catch(next);
 });
 
 
@@ -238,7 +231,6 @@ router.get("/:upload/comments", auth.optional, paginationParams, function (req: 
     page: +_page,
     limit: +_limit,
     sort: _sort,
-    populate: "author.username"
   }, function (err, result) {
     if (err) {
       return next(err);
@@ -338,6 +330,10 @@ router.post("/:upload/dependencies",
  * Retrieve the dependency tree
  */
 router.get("/:upload/dependencies", auth.optional, function (req: express.Request, res: express.Response, next: express.NextFunction) {
+  // currently disabled
+  res.status(httpStatus.UNAVAILABLE_FOR_LEGAL_REASONS);
+
+  // == never reached ==
   Upload
     .aggregate([
       {

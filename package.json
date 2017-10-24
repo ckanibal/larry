@@ -22,7 +22,6 @@
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\""
   },
   "dependencies": {
-    "acl": "^0.4.10",
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "blake2": "ludios/node-blake2",
@@ -48,10 +47,9 @@
     "rimraf": "^2.6.1",
     "sinon": "^4.0.1",
     "slug": "^0.9.1",
-    "tslint": "^5.6.0",
+    "tslint": "^5.8.0",
     "typescript": "^2.5.3",
-    "xmlbuilder": "^9.0.4",
-    "xmlify": "chrisveness/xmlify"
+    "xmlbuilder": "^9.0.4"
   },
   "devDependencies": {
     "@types/acl": "^0.4.33",

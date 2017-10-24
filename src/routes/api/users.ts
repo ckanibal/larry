@@ -25,10 +25,7 @@ router.get("/", paginationParams, function (req: express.Request, res: express.R
 });
 
 router.post("/", function (req, res, next) {
-  const user = new User();
-
-  user.username = req.body.user.username;
-  user.email = req.body.user.email;
+  const user = new User(req.body.user);
   user.setPassword(req.body.user.password);
 
   user.save().then(function () {
