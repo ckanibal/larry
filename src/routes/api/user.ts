@@ -1,7 +1,6 @@
 // routes/api/user.ts
 
 import express = require("express");
-import passport = require("passport");
 import httpStatus = require("http-status");
 
 import { User, IUser } from "../../models/User";
@@ -48,27 +47,6 @@ router.put("/", auth.required, (req: express.Request, res: express.Response, nex
       return res.json({user: user.toObject()});
     });
   }).catch(next);
-});
-
-router.post("/login", (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (!req.body.user.email) {
-    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {email: "can't be blank"}});
-  }
-
-  if (!req.body.user.password) {
-    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {password: "can't be blank"}});
-  }
-
-  passport.authenticate("local", { session: false }, (err: any, user: any, info: any) => {
-    if (err) { return next(err); }
-
-    if (user) {
-      user.token = user.generateJWT();
-      return res.json({user: user.toAuthJSON()});
-    } else {
-      return res.status(422).json(info);
-    }
-  })(req, res, next);
 });
 
 export = router;
