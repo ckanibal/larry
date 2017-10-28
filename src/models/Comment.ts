@@ -25,8 +25,8 @@ const CommentSchema = new mongoose.Schema({
     required: true,
   },
   author: {
-    type: Schema.Types.Mixed,
-    required: true
+    type: Schema.Types.ObjectId,
+    ref: "User"
   },
   upload: {
     type: mongoose.Schema.Types.ObjectId,

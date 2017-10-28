@@ -58,6 +58,10 @@ const UploadSchema = new Schema({
     ref: User.modelName
   },
   tags: [TagSchema],
+  comments: [{
+    type: Schema.Types.ObjectId,
+    ref: "Comment",
+  }],
   pic: {
     type: Schema.Types.ObjectId,
     ref: File.modelName

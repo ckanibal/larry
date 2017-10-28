@@ -1,4 +1,4 @@
-import express = require("express");
+import { Request, Response, NextFunction, Router } from "express";
 import httpStatus = require("http-status");
 
 import { Link, LinkRel } from "../../Link";
@@ -12,11 +12,11 @@ import { paginationParams, check, validationResult, Validator } from "../../conc
 import { IVote } from "../../concerns/Voting";
 import auth = require("../../config/auth");
 
-const router = express.Router();
+const router = Router();
 
 
 router.get("/", auth.optional, paginationParams,
-  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  function (req: Request, res: Response, next: NextFunction) {
     const {query: {limit: _limit = "50", sort = {createdAt: -1}, query = {}, page: _page = "1"}} = req;
 
     Upload.paginate(query,
@@ -26,7 +26,6 @@ router.get("/", auth.optional, paginationParams,
         limit: +_limit,
         populate: [
           {path: "author", select: "username"},
-          {path: "tags", select: "text"}
         ],
       }
     ).then(({docs: uploads, total, limit, page, pages}) => {
@@ -49,7 +48,7 @@ router.get("/", auth.optional, paginationParams,
   }
 );
 
-router.post("/", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.post("/", auth.required, function (req: Request, res: Response, next: NextFunction) {
   User.findById(req.user.id).then((user: IUser) => {
     if (!user) {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
@@ -66,61 +65,54 @@ router.post("/", auth.required, (req: express.Request, res: express.Response, ne
 });
 
 // Preload upload objects on routes with ":upload"
-router.param("upload", async (req: express.Request, res: express.Response, next: express.NextFunction, id: string) => {
-  try {
-    const upload = await Upload
-      .findById(id)
-      .populate("author", "username")
-      .populate("file")
-      .populate("tags", "text")
-      .exec();
-    console.log(upload);
-    if (!upload) {
-      return res.sendStatus(httpStatus.NOT_FOUND);
-    } else {
-      req.upload = upload;
-      return next();
-    }
-  } catch (err) {
-    return next(err);
-  }
+router.param("upload", function (req: Request, res: Response, next: NextFunction, id: string) {
+  Upload
+    .findById(id)
+    .populate("author", "username")
+    .populate({
+      path: "comments",
+      populate: {
+        path: "author",
+        select: "username",
+      }
+    })
+    .populate("file")
+    .then(upload => {
+      console.log(upload);
+      if (!upload) {
+        return res.sendStatus(httpStatus.NOT_FOUND);
+      } else {
+        req.upload = upload;
+        return next();
+      }
+    }).catch(next);
 });
 
 // return a upload
-router.get("/:upload", auth.optional, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.get("/:upload", auth.optional, function (req: Request, res: Response, next: NextFunction) {
   res.body = new DocumentResource(req.upload, new Link(`upload/${req.upload.id}`, "upload", LinkRel.Self));
   return next();
 });
 
 // update an upload
-router.put("/:upload", auth.required, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  try {
-    if (req.upload.author.id.toString() === req.user.id.toString()) {
-      const upload = Object.assign(req.upload, req.body);
-      upload.save().then((upload: IUpload) => {
-        res.body = new DocumentResource(upload, new Link(`uploads/${upload.id}`, "upload", LinkRel.Self));
-        return next();
-      }).catch(next);
-    } else {
-      return res.sendStatus(httpStatus.FORBIDDEN);
-    }
-  } catch (err) {
-    return next(err);
+router.put("/:upload", auth.required, function (req: Request, res: Response, next: NextFunction) {
+  if (req.upload.author.id.toString() === req.user.id.toString()) {
+    const upload = Object.assign(req.upload, req.body);
+    upload.save().then((upload: IUpload) => {
+      res.body = new DocumentResource(upload, new Link(`uploads/${upload.id}`, "upload", LinkRel.Self));
+      return next();
+    }).catch(next);
   }
 });
 
 // delete an upload
-router.delete("/:upload", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  try {
-    if (req.upload.author._id.toString() === req.user.id.toString()) {
-      return req.upload.remove().then(() => {
-        return res.sendStatus(httpStatus.NO_CONTENT);
-      });
-    } else {
-      return res.sendStatus(httpStatus.FORBIDDEN);
-    }
-  } catch (err) {
-    return next(err);
+router.delete("/:upload", auth.required, function (req: Request, res: Response, next: NextFunction) {
+  if (req.upload.author._id.toString() === req.user.id.toString()) {
+    req.upload.remove().then(() => {
+      res.sendStatus(httpStatus.NO_CONTENT);
+    }).catch(next);
+  } else {
+    res.sendStatus(httpStatus.FORBIDDEN);
   }
 });
 
@@ -132,7 +124,7 @@ router.delete("/:upload", auth.required, (req: express.Request, res: express.Res
 router.put("/:upload/vote",
   auth.required,
   check("vote.impact").isInt(),
-  function (req: express.Request, res: express.Response, next: express.NextFunction) {
+  function (req: Request, res: Response, next: NextFunction) {
     validationResult(req).throw();
     const {impact: _impact} = req.body.vote;
 
@@ -158,7 +150,7 @@ router.put("/:upload/vote",
 // tag an upload
 router.post("/:upload/tags",
   auth.required,
-  function (req: express.Request, res: express.Response, next: express.NextFunction) {
+  function (req: Request, res: Response, next: NextFunction) {
     const {text} = req.body.tag;
     User.findById(req.user.id, function (err, user) {
       if (!user) {
@@ -188,23 +180,23 @@ router.post("/:upload/tags",
  * Favourites
  */
 // Favorite an upload
-router.post("/:upload/favourite", auth.required, function (req, res, next) {
-   User.findById(req.payload.id).then(function (user) {
-     if (!user) {
-       return res.sendStatus(httpStatus.UNAUTHORIZED);
-     }
+router.post("/:upload/favourite", auth.required, function (req: Request, res: Response, next: NextFunction) {
+  User.findById(req.payload.id).then(function (user) {
+    if (!user) {
+      return res.sendStatus(httpStatus.UNAUTHORIZED);
+    }
 
-     return user.favourite(req.upload.id).then(function () {
-       return req.upload.updateFavoriteCount().then(function (upload: IUpload) {
-         return res.json(req.upload);
-       });
-     });
-   }).catch(next);
+    return user.favourite(req.upload.id).then(function () {
+      return req.upload.updateFavoriteCount().then(function (upload: IUpload) {
+        return res.json(req.upload);
+      });
+    });
+  }).catch(next);
 });
 
 
 // Unfavourite an upload
-router.delete("/:upload/favourite", auth.required, function (req, res, next) {
+router.delete("/:upload/favourite", auth.required, function (req: Request, res: Response, next: NextFunction) {
   User.findById(req.payload.id).then(function (user) {
     if (!user) {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
@@ -222,71 +214,35 @@ router.delete("/:upload/favourite", auth.required, function (req, res, next) {
 /**
  * Comments
  */
-
-// return an upload's comments
-router.get("/:upload/comments", auth.optional, paginationParams, function (req: express.Request, res: express.Response, next: express.NextFunction) {
-  const {query: {limit: _limit = "50", _sort = {createdAt: "desc"}, page: _page = "1"}} = req;
-
-  Comment.paginate({upload: req.upload.id}, {
-    page: +_page,
-    limit: +_limit,
-    sort: _sort,
-  }, function (err, result) {
-    if (err) {
-      return next(err);
-    } else {
-      res.body = new CollectionResource(result.docs.map(c => new DocumentResource(c)), new Link(`upload/${req.upload.id}/comments`, "comments", LinkRel.Self));
-      return next();
-    }
-  });
-});
-
 // create a new comment
-router.post("/:upload/comments", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  try {
-    if (!req.user) {
-      return res.sendStatus(httpStatus.UNAUTHORIZED);
-    }
-
+router.post("/:upload/comments", auth.required, function (req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    res.sendStatus(httpStatus.UNAUTHORIZED);
+  } else {
     const comment = new Comment(req.body.comment);
     comment.upload = req.upload;
     comment.author = req.user.id;
-
     comment.save().then(function (comment) {
       res.body = new DocumentResource(comment, new Link(`upload/${req.upload.id}/comments/${comment.id}`, "comment", LinkRel.Self));
-      return next();
+      next();
     }).catch(next);
-  } catch (err) {
-    return next(err);
   }
 });
 
 // Preload comment object on routes with ":comment"
-router.param("comment", async (req: express.Request, res: express.Response, next: express.NextFunction, id: string) => {
-  try {
-    const comment = await Comment.findById(id);
-    console.log(comment);
-    if (!comment) {
-      return res.sendStatus(httpStatus.NOT_FOUND);
-    } else {
-      req.comment = comment;
-      return next();
-    }
-  } catch (err) {
-    return next(err);
-  }
+router.param("comment", function(req: Request, res: Response, next: NextFunction, id: string) {
+  Comment.findById(id).then(comment => {
+    req.comment = comment;
+    next();
+  }).catch(next);
 });
 
 // delete a comment
-router.delete("/:article/comments/:comment", auth.required, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.delete("/:upload/comments/:comment", auth.required, function (req: Request, res: Response, next: NextFunction) {
   if (req.comment.author.toString() === req.user.id.toString()) {
-    req.comment.delete(function (err: Error) {
-      if (err) {
-        next(err);
-      } else {
-        res.sendStatus(httpStatus.NO_CONTENT);
-      }
-    });
+    req.comment.remove().then(function() {
+      res.sendStatus(httpStatus.NO_CONTENT);
+    }).catch(next);
   } else {
     res.sendStatus(httpStatus.FORBIDDEN);
   }
@@ -299,7 +255,7 @@ router.delete("/:article/comments/:comment", auth.required, (req: express.Reques
 // add a dependency
 router.post("/:upload/dependencies",
   auth.required,
-  function (req: express.Request, res: express.Response, next: express.NextFunction) {
+  function (req: Request, res: Response, next: NextFunction) {
     const {id} = req.body.dependency;
     User.findById(req.user.id, function (err, user) {
       if (!user) {
@@ -329,9 +285,9 @@ router.post("/:upload/dependencies",
 /**
  * Retrieve the dependency tree
  */
-router.get("/:upload/dependencies", auth.optional, function (req: express.Request, res: express.Response, next: express.NextFunction) {
+router.get("/:upload/dependencies", auth.optional, function (req: Request, res: Response, next: NextFunction) {
   // currently disabled
-  res.status(httpStatus.UNAVAILABLE_FOR_LEGAL_REASONS);
+  res.sendStatus(httpStatus.UNAVAILABLE_FOR_LEGAL_REASONS);
 
   // == never reached ==
   Upload
@@ -363,10 +319,10 @@ router.get("/:upload/dependencies", auth.optional, function (req: express.Reques
       }, {
         $group: {
           "_id": "$_id",
-          "dependencies": { $push: "$dependencies" }
+          "dependencies": {$push: "$dependencies"}
         }
       }
-])
+    ])
     .exec(function (err: Error, docs: IUpload[]) {
       if (err) {
         return next(err);

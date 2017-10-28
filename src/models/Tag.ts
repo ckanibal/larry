@@ -2,6 +2,8 @@
 
 import slug = require("slug");
 import { Schema, Model, Document } from "mongoose";
+import * as _ from "lodash";
+
 import { mongoose } from "../config/database";
 import { votingPlugin, Votable } from "../concerns/Voting";
 import { IUser } from "./User";
@@ -28,7 +30,7 @@ export const TagSchema = new mongoose.Schema({
     type: Schema.Types.String,
     minlength: 3,
     maxlength: 32,
-    match: /^\w/,
+    match: /[^\s]/,
     required: true,
     index: true,
   },
@@ -38,10 +40,6 @@ export const TagSchema = new mongoose.Schema({
   author: {
     type: Schema.Types.ObjectId,
     ref: "User"
-  },
-  upload: {
-    type: Schema.Types.ObjectId,
-    ref: "Upload"
   },
 }, {
   timestamps: true
@@ -61,8 +59,7 @@ TagSchema.methods.slugify = function () {
 
 TagSchema.set("toObject", {
   transform: function(doc: Document, ret: ITag, options: {}) {
-    delete ret.author;
-    return ret;
+    return _.pick(ret, ["_id", "text"]);
   }
 });
 

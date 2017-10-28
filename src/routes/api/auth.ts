@@ -18,12 +18,16 @@ const { CLONKSPOT_SECRET, CLONKSPOT_URL } = process.env;
  * Larry-db login
  */
 router.post("/login", function (req: Request, res: Response, next: NextFunction) {
+  if (!req.body.user) {
+    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user": "can't be blank"}});
+  }
+
   if (!req.body.user.email) {
-    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {email: "can't be blank"}});
+    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user.email": "can't be blank"}});
   }
 
   if (!req.body.user.password) {
-    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {password: "can't be blank"}});
+    return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user.password": "can't be blank"}});
   }
 
   passport.authenticate("local", { session: false }, (err: any, user: any, info: any) => {
