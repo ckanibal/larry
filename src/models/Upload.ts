@@ -24,7 +24,7 @@ export interface IUpload extends Document, Votable {
   author: IUser;
   tags: ITag[];
   pic: IFile;
-  file: IFile;
+  files: IFile[];
   comments: IComment[];
   dependencies: IUpload[];
   meta: any;
@@ -66,10 +66,10 @@ const UploadSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: File.modelName
   },
-  file: {
+  files: [{
     type: Schema.Types.ObjectId,
     ref: File.modelName
-  },
+  }],
   dependencies: [{
     type: Schema.Types.ObjectId,
     ref: "Upload",
@@ -123,37 +123,5 @@ UploadSchema.methods.comment = function (comment: IComment, user: IUser, fn: Fun
     }
   });
 };
-
-/**
- *
- * @param query
- * @param sort
- * @param page
- * @param limit
- */
-/*
-UploadSchema.statics.paginate = async function (query: any, {sort, page, limit}: { sort: string, page: number, limit: number }) {
-  const total = await this.count()
-    .where(query)
-    .exec();
-
-  const docs = await this.find()
-    .where(query)
-    .sort(sort)
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .populate("author", "username")
-    .exec();
-
-  const pages = Math.ceil(total / limit);
-  return {
-    docs,
-    total,
-    limit,
-    page,
-    pages
-  };
-};
-*/
 
 export const Upload = mongoose.model<IUpload>("Upload", UploadSchema) as IUploadModel;

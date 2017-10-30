@@ -29,6 +29,8 @@ export interface IUser extends Document {
 
   setPassword(password: string): void;
   validPassword(password: string): boolean;
+  generateJWT(): string;
+  toAuthJSON(): {};
   favourite(id: string): Promise<IUpload>;
   unfavourite(id: string): Promise<IUpload>;
 }

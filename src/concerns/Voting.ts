@@ -25,8 +25,8 @@ export interface IVoteModel extends PaginateModel<IVote> {
 
 const VoteSchema = new Schema({
   author: {
-    type: Schema.Types.Mixed,
-    required: true,
+    type: Schema.Types.ObjectId,
+    ref: "User"
   },
   ref: {
     model: Schema.Types.String,
