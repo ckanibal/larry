@@ -92,7 +92,7 @@ router.get("/clonkspot/scotty", jwt({
         res.redirect(url.toString());
       } else {
         // or you could create a new account
-        const user = new User(req.user);
+        const user = new User({username: req.user.sub, email: req.user.email});
         user.save().then(user => {
           const url = new URL(CLONKSPOT_RETURN_URL);
           url.search = user.generateJWT();
@@ -101,7 +101,6 @@ router.get("/clonkspot/scotty", jwt({
       }
     }
   });
-  res.sendStatus(httpStatus.OK);
 });
 
 export = router;
