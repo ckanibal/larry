@@ -77,6 +77,7 @@ router.param("upload", function (req: Request, res: Response, next: NextFunction
       }
     })
     .populate("files")
+    .populate("dependencies")
     .then(upload => {
       console.log(upload);
       if (!upload) {
