@@ -76,7 +76,7 @@ router.param("upload", function (req: Request, res: Response, next: NextFunction
         select: "username",
       }
     })
-    .populate("file")
+    .populate("files")
     .then(upload => {
       console.log(upload);
       if (!upload) {

@@ -87,16 +87,12 @@ router.get("/clonkspot/scotty", jwt({
       next(err);
     } else {
       if (user) {
-        const url = new URL(CLONKSPOT_RETURN_URL);
-        url.search = user.generateJWT();
-        res.redirect(url.toString());
+        res.redirect(CLONKSPOT_RETURN_URL + user.generateJWT());
       } else {
         // or you could create a new account
         const user = new User({username: req.user.sub, email: req.user.email});
         user.save().then(user => {
-          const url = new URL(CLONKSPOT_RETURN_URL);
-          url.search = user.generateJWT();
-          res.redirect(url.toString());
+          res.redirect(CLONKSPOT_RETURN_URL + user.generateJWT());
         }).catch(next);
       }
     }

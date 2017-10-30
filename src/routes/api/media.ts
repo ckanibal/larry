@@ -61,6 +61,19 @@ router.get("/:file", auth.optional, function (req: Request, res: Response, next:
 });
 
 /**
+ * Delete a file
+ */
+router.delete("/:file", auth.required, function (req: Request, res: Response, next: NextFunction) {
+  if (req.media.author.toString() === req.user.id.toString()) {
+    req.media.remove().then(function() {
+      res.sendStatus(httpStatus.NO_CONTENT);
+    }).catch(next);
+  } else {
+    res.sendStatus(httpStatus.FORBIDDEN);
+  }
+});
+
+/**
  * Upload a file
  * @query hashify (boolean) Add hashes for file
  */
