@@ -1,0 +1,21 @@
+version: '3'
+services:
+  larry:
+    build: .
+    container_name: "larry"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://database
+      - PORT=8080
+      - UPLOAD_PATH=upload/
+      - CLONKSPOT_URL=https://clonkspot.org/api/auth/jwt
+      - SECRET=${SECRET}
+      - CLONKSPOT_SECRET=${CLONKSPOT_SECRET}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: "database"
