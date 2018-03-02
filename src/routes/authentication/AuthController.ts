@@ -62,7 +62,6 @@ export class AuthController extends Controller {
 
     passport.authenticate("local", { session: false }, (err: Error, user: IUser, info: any) => {
       if (err) { return next(err); }
-
       if (user) {
         user.token = user.generateJWT();
         res.format({

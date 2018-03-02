@@ -3,6 +3,7 @@ import "reflect-metadata";
 import * as validator from "validator";
 import httpStatus = require("http-status");
 import { IUser } from "../models/User";
+import auth = require("../config/auth");
 
 export interface IController {
   router: Router;
@@ -69,6 +70,20 @@ export abstract class Controller implements IController {
           }
       }
     };
+  }
+
+  /**
+   *
+   * @param {e.Request} req
+   * @param {e.Response} res
+   * @param {e.NextFunction} next
+   * @returns {Promise<void>}
+   */
+  protected async checkAuthentication(req: Request, res: Response, next: NextFunction) {
+    auth.optional(req, res, (error?) => {
+      res.locals.user = req.user;
+      next(error);
+    });
   }
 }
 

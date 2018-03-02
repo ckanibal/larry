@@ -6,6 +6,7 @@ import { Comment, IComment } from "../../models/Comment";
 import { User, IUser } from "../../models/User";
 import httpStatus = require("http-status");
 import { VotingController } from "../voting/VotingController";
+import auth = require("../../config/auth");
 
 
 export class CommentController extends Controller {
@@ -15,17 +16,21 @@ export class CommentController extends Controller {
     super();
     this._voting = new VotingController((req: Request) => req.comment);
 
+    // auth
+    this.router.use(this.checkAuthentication);
+    this.router.use(this.checkPermissions(this.getRecord));
+
     this.router.param("comment", this.commentParam);
-    this.router.get("/", this.checkPermissions(this.getRecord), this.index);
+    this.router.get("/", this.index);
 
     // Subresources
     this.router.use("/:comment/vote", this._voting.router);
 
     // CRUD
-    this.router.post("/", this.checkPermissions(this.getRecord), this.post);
-    this.router.get("/:comment", this.checkPermissions(this.getRecord), this.get);
-    this.router.put("/:comment", this.checkPermissions(this.getRecord), this.put);
-    this.router.delete("/:comment", this.checkPermissions(this.getRecord), this.delete);
+    this.router.post("/", auth.required, this.post);
+    this.router.get("/:comment", this.get);
+    this.router.put("/:comment", auth.required, this.put);
+    this.router.delete("/:comment", auth.required, this.delete);
   }
 
   @ObjectIdParam

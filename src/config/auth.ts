@@ -23,13 +23,13 @@ const auth = {
   required: jwt({
     secret: secret,
     userProperty: "user",
-    getToken: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken(), cookieExtractor])
+    getToken: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken(), cookieExtractor]),
   }),
   optional: jwt({
     secret: secret,
     userProperty: "user",
     credentialsRequired: false,
-    getToken: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken(), cookieExtractor])
+    getToken: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken(), cookieExtractor]),
   })
 };
 

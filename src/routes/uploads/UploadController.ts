@@ -18,8 +18,12 @@ export class UploadController extends Controller {
     this._comments = new CommentController();
     this._voting = new VotingController((req: Request) => req.upload);
 
+    // auth
+    this.router.use(this.checkAuthentication);
+    this.router.use(this.checkPermissions(this.getRecord));
+
     this.router.param("upload", this.uploadParam);
-    this.router.get("/", auth.optional, this.checkPermissions(this.getRecord), this.index);
+    this.router.get("/", auth.optional, this.index);
 
     // Forms
     this.router.get("/create", auth.required, this.create);
@@ -29,10 +33,10 @@ export class UploadController extends Controller {
     this.router.use("/:upload/vote", this._voting.router);
 
     // CRUD
-    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post);
-    this.router.get("/:upload", auth.optional, this.checkPermissions(this.getRecord), this.get);
-    this.router.put("/:upload", auth.required, this.checkPermissions(this.getRecord), this.put);
-    this.router.delete("/:upload", auth.required, this.checkPermissions(this.getRecord), this.delete);
+    this.router.post("/", auth.required, this.post);
+    this.router.get("/:upload", auth.optional, this.get);
+    this.router.put("/:upload", auth.required, this.put);
+    this.router.delete("/:upload", auth.required, this.delete);
   }
 
   protected getRecord(req: Request, ...args: any[]): IUpload {
@@ -76,7 +80,7 @@ export class UploadController extends Controller {
     };
     res.format({
       html: function() {
-        res.render("upload/index", { ...response, user: req.user });
+        res.render("upload/index", response);
       },
       default: function() {
         res.json(response);
