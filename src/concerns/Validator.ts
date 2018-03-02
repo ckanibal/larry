@@ -8,7 +8,6 @@ import { Types } from "mongoose";
 import httpStatus = require("http-status");
 import validator = require("validator");
 
-
 /**
  * Validator namespace supports multiple validators
  */

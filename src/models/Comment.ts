@@ -1,9 +1,9 @@
 // models/Comment.ts
 
 import { mongoose } from "../config/database";
-import { Schema, Model, Document, PaginateModel } from "mongoose";
+import { Schema, Document, PaginateModel } from "mongoose";
 import mongoosePaginate = require("mongoose-paginate");
-import { votingPlugin, Votable } from "../concerns/Voting";
+import { votingPlugin, Votable } from "./Vote";
 
 import { IUser } from "./User";
 import { IUpload } from "./Upload";
@@ -29,9 +29,10 @@ const CommentSchema = new mongoose.Schema({
     ref: "User"
   },
   upload: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: "Upload",
-    required: true
+    required: true,
+    index: true,
   }
 }, {
   timestamps: true
@@ -42,8 +43,14 @@ CommentSchema.plugin(votingPlugin, {
     validator: function (v: number) {
       return [-1, +1].includes(v);
     },
-    message: "Vote must be +/- 1 (at least for now)"
+    message: "Vote must be +/- 1"
   }
+});
+
+// populate author per default
+CommentSchema.pre("find", function (next) {
+  this.populate({path: "author", select: "username"});
+  next();
 });
 
 

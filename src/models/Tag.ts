@@ -5,7 +5,6 @@ import { Schema, Model, Document } from "mongoose";
 import * as _ from "lodash";
 
 import { mongoose } from "../config/database";
-import { votingPlugin, Votable } from "../concerns/Voting";
 import { IUser } from "./User";
 import { IUpload } from "./Upload";
 
@@ -13,7 +12,7 @@ import { IUpload } from "./Upload";
  * Tag Model
  */
 
-export interface ITag extends Document, Votable {
+export interface ITag extends Document {
   text: string;
   slug: string;
   author: IUser;
@@ -60,15 +59,6 @@ TagSchema.methods.slugify = function () {
 TagSchema.set("toObject", {
   transform: function(doc: Document, ret: ITag, options: {}) {
     return _.pick(ret, ["_id", "text"]);
-  }
-});
-
-TagSchema.plugin(votingPlugin, {
-  validate: {
-    validator: function (v: number) {
-      return [-1, +1].includes(v);
-    },
-    message: "Vote must be +/- 1 (at least for now)"
   }
 });
 

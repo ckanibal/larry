@@ -1,0 +1,38 @@
+extends ../layouts/default
+
+block page
+  - const pageTitle = "Login";
+
+block main
+  h1= pageTitle
+
+block content
+  .login.container
+    h3.
+      Login or #[a(href="/auth/signup") Sign up]
+    .row.justify-content-md-center
+      a.btn.btn-light.btn-lg#login-clonkspot(href="/auth/clonkspot", role="button")
+        img(src="/assets/clonkspot-logo.png" alt="Login via clonkspot")
+
+    .row.justify-content-md-center
+      strong.text-uppercase or
+
+    .row.justify-content-md-center
+      form.col-6(action='', autocomplete='off', method='POST')
+        .input-group
+          .input-group-prepend
+            span.input-group-text
+              i.fa.fa-user
+          input.form-control(type='text', name='user[email]', placeholder='username or email address')
+        .input-group
+          .input-group-prepend
+            span.input-group-text
+              i.fa.fa-lock
+          input.form-control(type='password', name='user[password]', placeholder='Password')
+        button.btn.btn-lg.btn-primary.btn-block(type='submit') Login
+    .row.justify-content-md-center
+      label.checkbox
+        input(type='checkbox', value='remember-me')
+        | Remember Me
+      p
+        a(href='#') Forgot password?

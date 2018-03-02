@@ -3,7 +3,6 @@
 import { mongoose } from "../config/database";
 import { Schema, PaginateModel, Document } from "mongoose";
 
-import uniqueValidator = require("mongoose-unique-validator");
 import mongoosePaginate = require("mongoose-paginate");
 import crypto = require("crypto");
 import jwt = require("jsonwebtoken");
@@ -26,6 +25,8 @@ export interface IUser extends Document {
   favorites: IUpload[];
   hash: string;
   salt: string;
+  role: string;
+  token?: string;
 
   setPassword(password: string): void;
   validPassword(password: string): boolean;
@@ -33,6 +34,9 @@ export interface IUser extends Document {
   toAuthJSON(): {};
   favourite(id: string): Promise<IUpload>;
   unfavourite(id: string): Promise<IUpload>;
+
+  // Authorization
+  isAdmin(): boolean;
 }
 
 export interface IUserModel extends PaginateModel<IUser> {
@@ -60,7 +64,8 @@ const UserSchema = new Schema({
   image: String,
   favorites: [{type: Schema.Types.ObjectId, ref: "Upload"}],
   hash: String,
-  salt: String
+  salt: String,
+  role: String,
 }, {timestamps: true});
 
 UserSchema.set("toJSON", {
@@ -72,7 +77,6 @@ UserSchema.set("toJSON", {
   }
 });
 
-UserSchema.plugin(uniqueValidator, {message: "is already taken."});
 UserSchema.plugin(mongoosePaginate);
 
 UserSchema.methods.validPassword = function (password: string) {
@@ -132,6 +136,10 @@ UserSchema.methods.isFavorite = function (id: number) {
   return this.favorites.some(function (favoriteId: number) {
     return favoriteId.toString() === id.toString();
   });
+};
+
+UserSchema.methods.isAdmin = function() {
+  return this.role === "admin";
 };
 
 export const User = mongoose.model<IUser>("User", UserSchema) as IUserModel;

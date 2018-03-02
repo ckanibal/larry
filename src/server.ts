@@ -4,6 +4,7 @@ import * as express from "express";
 import * as cors from "cors";
 import * as logger from "morgan";
 import * as bodyParser from "body-parser";
+import * as cookieParser from "cookie-parser";
 import * as expressValidator from "express-validator";
 import * as httpStatus from "http-status";
 import * as errorHandler from "errorhandler";
@@ -11,9 +12,6 @@ import * as errorHandler from "errorhandler";
 import routes = require("./routes");
 require("./config/passport");
 
-/**
- * Controllers (route handlers).
- */
 
 /**
  * Server class
@@ -35,15 +33,17 @@ export class Server {
     // add routes
     this.routes();
 
-    // add api
-    this.api();
+    // add middleware
+    this.middleware();
+
+    // add error handler
+    this.errorHandler();
   }
 
   private config(): void {
     /**
      * Mongoose configuration
      */
-
 
     /**
      * Create express server
@@ -55,8 +55,12 @@ export class Server {
      */
     this.app.disable("x-powered-by");
     this.app.set("port", process.env.PORT || 3000);
+    this.app.set("view engine", "pug");
+    this.app.set("views", "./views/html");
     this.app.use(logger("dev"));
     this.app.use(cors());
+    this.app.use("/assets", express.static("./views/assets"));
+    this.app.use(cookieParser());
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
     this.app.use(expressValidator({
@@ -68,46 +72,59 @@ export class Server {
     }));
   }
 
+  private middleware(): void {
+    /**
+     * register content renders
+     */
+
+
+    /**
+     * Content negotiation (html/json/xml)
+     */
+    // this.app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    //   if (res.body) {
+    //     res.format({
+    //       "text/html": () => {
+    //         res.render()
+    //       },
+    //       "application/xml": () => {
+    //         res.send(res.body.toXml());
+    //       },
+    //       "application/json": () => {
+    //         res.send(res.body.toJSON());
+    //       },
+    //       "default": () => {
+    //         res.status(httpStatus.NOT_ACCEPTABLE).send("Not acceptable");
+    //       }
+    //     });
+    //   }
+    //   next();
+    // });
+  }
+
   /**
    * Setup routes
    */
   private routes(): void {
     this.app.use(routes);
-
-    /**
-     * Content negotiation (json/xml)
-     */
-    this.app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-      if (res.body) {
-        res.format({
-          "application/xml": () => {
-            res.send(res.body.toXml());
-          },
-          "application/json": () => {
-            res.send(res.body.toJSON(req.query));
-          },
-          "default": () => {
-            res.status(httpStatus.NOT_ACCEPTABLE).send("Not acceptable");
-          }
-        });
-      }
-      next();
-    });
-
-    /**
-     * Handle errors
-     */
-    this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      res.status = err.status || httpStatus.INTERNAL_SERVER_ERROR;
-      next(err);
-    });
-    this.app.use(errorHandler());
   }
 
   /**
-   * Setup api routes
+   * Handle errors
    */
-  api() {
+  private errorHandler(): void {
+    this.app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      res.format({
+        html: function() {
+          res.status(err.status || httpStatus.INTERNAL_SERVER_ERROR);
+          next(err);
+        },
+        json: function() {
+          res.sendStatus(err.status || httpStatus.INTERNAL_SERVER_ERROR);
+        }
+      });
+    });
+    this.app.use(errorHandler());
   }
 
   /**
@@ -120,3 +137,5 @@ export class Server {
     });
   }
 }
+
+new Server().run();

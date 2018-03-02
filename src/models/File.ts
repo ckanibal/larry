@@ -7,10 +7,11 @@ import * as fs from "fs";
 import { Readable } from "stream";
 
 import * as crypto from "crypto";
-import * as blake2 from "blake2";
+import { IUser } from "./User";
 
 
 export interface IFile extends Document {
+  author: IUser;
   length: number;
   chunkSize: number;
   uploadDate: Date;
@@ -52,6 +53,10 @@ const FileSchema = new mongoose.Schema({
   metadata: {
     type: mongoose.SchemaTypes.Mixed
   },
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: "User"
+  },
 }, {
   collection: "fs.files"
 });
@@ -62,12 +67,12 @@ FileSchema.methods.hashify = function() {
       _id: this.id,
     });
     const sha1 = crypto.createHash("sha1");
-    const blake2b = blake2.createHash("blake2b");
+    const sha2 = crypto.createHash("sha2");
 
     readstream.on("error", reject);
     readstream.on("data", (chunk: Buffer) => {
       sha1.update(chunk);
-      blake2b.update(chunk);
+      sha2.update(chunk);
     });
     readstream.on("end", () => {
       this.model("File").findByIdAndUpdate(this._id, {
@@ -75,7 +80,7 @@ FileSchema.methods.hashify = function() {
           metadata: {
             hashes: {
               sha1: sha1.digest("hex"),
-              blake2b: blake2b.digest("hex"),
+              sha256: sha2.digest("hex"),
               md5: this.md5,
             }
           }
@@ -104,13 +109,13 @@ FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hash
     });
 
     const sha1 = hashes ? crypto.createHash("sha1") : undefined;
-    const blake2b = hashes ? blake2.createHash("blake2b") : undefined;
+    const sha2 = hashes ? crypto.createHash("sha256") : undefined;
 
     fs.createReadStream(file.path)
       .on("data", (chunk: Buffer) => {
         if (hashes) {
           sha1.update(chunk);
-          blake2b.update(chunk);
+          sha2.update(chunk);
         }
       })
       .on("error", reject)
@@ -118,7 +123,7 @@ FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hash
 
     gridStream.on("error", reject);
     gridStream.on("close", (file: IFile) => {
-      const metadata: { hashes: { md5?: string, sha1?: string, blake2b?: string } } = {
+      const metadata: { hashes: { md5?: string, sha1?: string, sha256?: string } } = {
         hashes: {
           md5: file.md5,
         }
@@ -126,7 +131,7 @@ FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hash
 
       if (hashes) {
         metadata.hashes.sha1 = sha1.digest("hex");
-        metadata.hashes.blake2b = blake2b.digest("hex");
+        metadata.hashes.sha256 = sha2.digest("hex");
       }
 
       this.findByIdAndUpdate(file._id, {

@@ -1,0 +1,18 @@
+extends ../layouts/default
+
+block page
+  - const pageTitle = "Comments";
+
+block main
+  h1= pageTitle
+
+block content
+  - if (comments.length)
+    each comment in comments
+      include comment
+
+  - if (pagination.pages >= 1)
+    + pagination(pagination)
+  - else
+    h4.muted No comments.&nbsp;
+    a(href="/comments/new") create one
