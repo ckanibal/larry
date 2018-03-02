@@ -68,7 +68,7 @@
     "@types/gridfs-stream": "^0.5.29",
     "@types/http-status": "^0.2.29",
     "@types/jsonwebtoken": "^7.2.3",
-    "@types/lodash": "^4.14.80",
+    "@types/lodash": "^4.14.104",
     "@types/mocha": "^2.2.43",
     "@types/mongoose": "^4.7.19",
     "@types/mongoose-paginate": "^5.0.5",
