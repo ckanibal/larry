@@ -41,7 +41,7 @@ export class AuthController extends Controller {
 
   public async login_form(req: Request, res: Response, next: NextFunction) {
     res.format({
-      html: function() {
+      html: function () {
         res.render("auth/login");
       },
     });
@@ -60,17 +60,19 @@ export class AuthController extends Controller {
       return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user.password": "can't be blank"}});
     }
 
-    passport.authenticate("local", { session: false }, (err: Error, user: IUser, info: any) => {
-      if (err) { return next(err); }
+    passport.authenticate("local", {session: false}, (err: Error, user: IUser, info: any) => {
+      if (err) {
+        return next(err);
+      }
       if (user) {
         user.token = user.generateJWT();
         res.format({
-          html: function() {
+          html: function () {
             res.cookie("jwt", user.token);
             res.redirect("/");
           },
-          default: function() {
-            res.json({user});
+          json: function () {
+            res.json({user: user.toAuthJSON()});
           }
         });
 
@@ -82,11 +84,11 @@ export class AuthController extends Controller {
 
   public async logout(req: Request, res: Response, next: NextFunction) {
     res.format({
-      html: function() {
+      html: function () {
         res.clearCookie("jwt");
         res.redirect("/");
       },
-      default: function() {
+      json: function () {
         res.json({status: "OK"});
       }
     });
