@@ -9,10 +9,10 @@ block main
 block content
   .login.container
     h3.
-      Login or #[a(href="/auth/signup") Sign up]
+      Login or #[a(href=appdir+"/auth/signup") Sign up]
     .row.justify-content-md-center
-      a.btn.btn-light.btn-lg#login-clonkspot(href="/auth/clonkspot", role="button")
-        img(src="/assets/clonkspot-logo.png" alt="Login via clonkspot")
+      a.btn.btn-light.btn-lg#login-clonkspot(href=appdir+"/auth/clonkspot", role="button")
+        img(src=appdir+"/assets/clonkspot-logo.png" alt="Login via clonkspot")
 
     .row.justify-content-md-center
       strong.text-uppercase or
