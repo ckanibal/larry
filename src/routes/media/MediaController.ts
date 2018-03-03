@@ -12,10 +12,14 @@ export class MediaController extends Controller {
   public constructor() {
     super();
 
+    // auth
+    this.router.use(this.checkAuthentication);
+    this.router.use(this.checkPermissions(this.getRecord));
+
     this.router.param("file", this.fileParam);
-    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), upload.single("media"), this.post);
-    this.router.get("/:file", auth.optional, this.checkPermissions(this.getRecord), this.get);
-    this.router.delete("/:file", auth.required, this.checkPermissions(this.getRecord), this.delete);
+    this.router.post("/", auth.required, upload.single("media"), this.post);
+    this.router.get("/:file", this.get);
+    this.router.delete("/:file", auth.required, this.delete);
   }
 
   protected getRecord(req: Request): IFile {
@@ -56,8 +60,7 @@ export class MediaController extends Controller {
       fs.unlink(req.file.path, err => {
         if (err == undefined) {
           // seems good
-          res.body = file;
-          return next();
+          res.json(file);
         } else {
           res.sendStatus(httpStatus.INTERNAL_SERVER_ERROR);
         }
