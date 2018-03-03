@@ -6,7 +6,7 @@ import slug = require("slug");
 
 import { User, IUser } from "./User";
 import { File, IFile } from "./File";
-import { ITag, TagSchema } from "./Tag";
+import { ITag, Tag, TagSchema } from "./Tag";
 
 import { votingPlugin, Votable } from "./Vote";
 
@@ -30,6 +30,7 @@ export interface IUpload extends Document, Votable {
 export interface IUploadModel extends PaginateModel<IUpload> {
   // declare all additional schema methods here
   slugify(): string;
+
   updateFavoriteCount(): IUser;
 }
 
@@ -54,10 +55,7 @@ const UploadSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User"
   },
-  tags: {
-    type: [TagSchema],
-    index: true
-  },
+  tags: [String],
   pic: {
     type: Schema.Types.ObjectId,
     ref: File.modelName

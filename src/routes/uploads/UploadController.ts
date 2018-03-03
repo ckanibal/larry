@@ -10,6 +10,7 @@ import { IUser, User } from "../../models/User";
 import { CommentController } from "../comments/CommentController";
 import { VotingController } from "../voting/VotingController";
 import auth = require("../../config/auth");
+import _ = require("lodash");
 
 export class UploadController extends Controller {
   protected _comments: CommentController;
@@ -47,7 +48,6 @@ export class UploadController extends Controller {
 
   @ObjectIdParam
   private async uploadParam(req: Request, res: Response, next: NextFunction, id: string) {
-    console.log("populate param");
     try {
       req.upload = await Upload
         .findById(id)
@@ -122,9 +122,9 @@ export class UploadController extends Controller {
   }
 
   public async put(req: Request, res: Response, next: NextFunction) {
-    console.log(req.upload);
     if (req.upload.author.id.toString() === req.user.id.toString()) {
-      const upload = await Upload.findByIdAndUpdate(req.upload.id, req.body);
+      _.assign(req.upload, _.omit(req.body, UploadController.RESERVED_FIELDS));
+      const upload = await req.upload.save();
       res.json(upload);
     }
   }
