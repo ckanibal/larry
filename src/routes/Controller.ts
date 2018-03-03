@@ -4,6 +4,7 @@ import * as validator from "validator";
 import httpStatus = require("http-status");
 import { IUser } from "../models/User";
 import auth = require("../config/auth");
+import * as pluralize from "pluralize";
 
 export interface IController {
   router: Router;

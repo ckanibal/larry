@@ -72,7 +72,7 @@ export class CommentController extends Controller {
       html: function() {
         res.render("comments/index", response);
       },
-      default: function() {
+      json: function() {
         res.json(response);
       }
     });
@@ -95,7 +95,7 @@ export class CommentController extends Controller {
       html: function() {
         res.render("comments/get", req.comment);
       },
-      default: function() {
+      json: function() {
         res.json(req.comment);
       }
     });

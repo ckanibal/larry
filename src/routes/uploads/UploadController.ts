@@ -1,10 +1,12 @@
 // routes/uploads/UploadController.ts
 
-import { Controller, PaginationParams, ObjectIdParam } from "../Controller";
 import { NextFunction, Request, Response } from "express";
+import * as pluralize from "pluralize";
+import httpStatus = require("http-status");
+import jsonxml = require("jsontoxml");
+import { Controller, PaginationParams, ObjectIdParam } from "../Controller";
 import { Upload, IUpload } from "../../models/Upload";
 import { IUser, User } from "../../models/User";
-import httpStatus = require("http-status");
 import { CommentController } from "../comments/CommentController";
 import { VotingController } from "../voting/VotingController";
 import auth = require("../../config/auth");
@@ -48,7 +50,7 @@ export class UploadController extends Controller {
     try {
       req.upload = await Upload
         .findById(id)
-        .populate("author")
+        .populate("author", "username")
         .populate("pic")
         .populate("files")
         .populate("dependencies");
@@ -79,11 +81,14 @@ export class UploadController extends Controller {
       uploads
     };
     res.format({
-      html: function() {
+      html: function () {
         res.render("upload/index", response);
       },
-      default: function() {
+      json: function () {
         res.json(response);
+      },
+      "application/xml": function () {
+        res.send(jsonxml(JSON.stringify({resource: response})));
       }
     });
     next();
@@ -103,11 +108,14 @@ export class UploadController extends Controller {
 
   public async get(req: Request, res: Response, next: NextFunction) {
     res.format({
-      html: function() {
+      html: function () {
         res.render("upload/get", req.upload);
       },
-      default: function() {
+      json: function () {
         res.json(req.upload);
+      },
+      "application/xml": function () {
+        res.send(jsonxml(JSON.stringify({upload: req.upload})));
       }
     });
   }
@@ -126,7 +134,7 @@ export class UploadController extends Controller {
 
   public async create(req: Request, res: Response, next: NextFunction) {
     res.format({
-      html: function() {
+      html: function () {
         res.render("upload/create");
       },
     });
