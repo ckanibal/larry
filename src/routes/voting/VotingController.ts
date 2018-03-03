@@ -14,10 +14,9 @@ export class VotingController extends Controller {
 
     // auth
     this.router.use(this.checkAuthentication);
-    this.router.use(this.checkPermissions());
 
     // CRUD
-    this.router.post("/", auth.required, this.post);
+    this.router.post("/", auth.required, this.checkPermissions(), this.post);
   }
 
   public async post(req: Request, res: Response, next: NextFunction) {

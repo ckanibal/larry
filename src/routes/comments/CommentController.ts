@@ -18,19 +18,18 @@ export class CommentController extends Controller {
 
     // auth
     this.router.use(this.checkAuthentication);
-    this.router.use(this.checkPermissions(this.getRecord));
-
     this.router.param("comment", this.commentParam);
-    this.router.get("/", this.index);
+
+    this.router.get("/", this.checkPermissions(this.getRecord), this.index);
 
     // Subresources
     this.router.use("/:comment/vote", this._voting.router);
 
     // CRUD
-    this.router.post("/", auth.required, this.post);
-    this.router.get("/:comment", this.get);
-    this.router.put("/:comment", auth.required, this.put);
-    this.router.delete("/:comment", auth.required, this.delete);
+    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post);
+    this.router.get("/:comment", this.checkPermissions(this.getRecord), this.get);
+    this.router.put("/:comment", auth.required, this.checkPermissions(this.getRecord), this.put);
+    this.router.delete("/:comment", auth.required, this.checkPermissions(this.getRecord), this.delete);
   }
 
   @ObjectIdParam

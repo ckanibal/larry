@@ -20,25 +20,25 @@ export class UploadController extends Controller {
     this._comments = new CommentController();
     this._voting = new VotingController((req: Request) => req.upload);
 
+    this.router.param("upload", this.uploadParam);
+
     // auth
     this.router.use(this.checkAuthentication);
-    this.router.use(this.checkPermissions(this.getRecord));
 
-    this.router.param("upload", this.uploadParam);
-    this.router.get("/", auth.optional, this.index);
+    this.router.get("/", auth.optional, this.checkPermissions(this.getRecord), this.index);
 
     // Forms
-    this.router.get("/create", auth.required, this.create);
+    this.router.get("/create", auth.required, this.checkPermissions(this.getRecord), this.create);
 
     // Subresources
     this.router.use("/:upload/comments", this._comments.router);
     this.router.use("/:upload/vote", this._voting.router);
 
     // CRUD
-    this.router.post("/", auth.required, this.post);
-    this.router.get("/:upload", auth.optional, this.get);
-    this.router.put("/:upload", auth.required, this.put);
-    this.router.delete("/:upload", auth.required, this.delete);
+    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post);
+    this.router.get("/:upload", this.checkPermissions(this.getRecord), this.get);
+    this.router.put("/:upload", auth.required, this.checkPermissions(this.getRecord), this.put);
+    this.router.delete("/:upload", auth.required, this.checkPermissions(this.getRecord), this.delete);
   }
 
   protected getRecord(req: Request, ...args: any[]): IUpload {
@@ -47,6 +47,7 @@ export class UploadController extends Controller {
 
   @ObjectIdParam
   private async uploadParam(req: Request, res: Response, next: NextFunction, id: string) {
+    console.log("populate param");
     try {
       req.upload = await Upload
         .findById(id)
@@ -121,6 +122,7 @@ export class UploadController extends Controller {
   }
 
   public async put(req: Request, res: Response, next: NextFunction) {
+    console.log(req.upload);
     if (req.upload.author.id.toString() === req.user.id.toString()) {
       const upload = await Upload.findByIdAndUpdate(req.upload.id, req.body);
       res.json(upload);

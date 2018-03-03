@@ -50,6 +50,7 @@ export abstract class Controller implements IController {
         case "put":
         case "delete":
           const r = getRecord(req, res, next);
+          console.log("acl:", r);
           if (req.user && (r.author.id === req.user.id || req.user.isAdmin())) {
             next();
           } else {

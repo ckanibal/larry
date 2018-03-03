@@ -14,12 +14,11 @@ export class MediaController extends Controller {
 
     // auth
     this.router.use(this.checkAuthentication);
-    this.router.use(this.checkPermissions(this.getRecord));
 
     this.router.param("file", this.fileParam);
-    this.router.post("/", auth.required, upload.single("media"), this.post);
-    this.router.get("/:file", this.get);
-    this.router.delete("/:file", auth.required, this.delete);
+    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), upload.single("media"), this.post);
+    this.router.get("/:file", this.checkPermissions(this.getRecord), this.get);
+    this.router.delete("/:file", auth.required, this.checkPermissions(this.getRecord), this.delete);
   }
 
   protected getRecord(req: Request): IFile {
