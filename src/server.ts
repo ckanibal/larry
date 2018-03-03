@@ -10,6 +10,8 @@ import * as httpStatus from "http-status";
 import * as errorHandler from "errorhandler";
 
 import routes = require("./routes");
+import _ = require("lodash");
+
 require("./config/passport");
 
 
@@ -122,7 +124,8 @@ export class Server {
           next(err);
         },
         json: function() {
-          res.sendStatus(err.status || httpStatus.INTERNAL_SERVER_ERROR);
+          res.status(err.status || httpStatus.INTERNAL_SERVER_ERROR).send(_.pick(err, ["status", "message"]));
+          next(err);
         }
       });
     });

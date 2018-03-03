@@ -4,7 +4,7 @@ import { Controller, PaginationParams, ObjectIdParam } from "../Controller";
 import { NextFunction, Request, Response } from "express";
 import httpStatus = require("http-status");
 import { User } from "../../models/User";
-import { Votable } from "../../models/Vote";
+import { IVote, Votable } from "../../models/Vote";
 import auth = require("../../config/auth");
 
 
@@ -19,13 +19,25 @@ export class VotingController extends Controller {
     this.router.post("/", auth.required, this.checkPermissions(), this.post);
   }
 
-  public async post(req: Request, res: Response, next: NextFunction) {
+  /**
+   * This function binds to this (because it is state-dependant)
+   * @param {Request} req
+   * @param {Response} res
+   * @param {e.NextFunction} next
+   * @returns {Promise<Response>}
+   */
+  public post = async(req: Request, res: Response, next: NextFunction) => {
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
     }
 
-    const vote = await this._param(req).vote(req.body.impact, user);
-    res.json(vote);
-  }
+    this._param(req).vote(req.body.impact, user, (err?: Error, vote?: IVote) => {
+      if (!err) {
+        res.json(vote);
+      } else {
+        next(err);
+      }
+    });
+  };
 }

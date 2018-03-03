@@ -1,7 +1,7 @@
 // models/Voting.ts
 
 import { mongoose } from "../config/database";
-import { Schema, Model, Document } from "mongoose";
+import { Schema, Model, Document, Types } from "mongoose";
 import httpStatus = require("http-status");
 
 import { User, IUser } from "./User";
@@ -43,27 +43,30 @@ const VoteSchema = new Schema({
 VoteSchema.index({author: 1, "ref.document": 1}, {unique: true});
 
 
-VoteSchema.methods.updateReferenced = async function (next: Function, done: Function) {
+VoteSchema.methods.updateReferenced = async function (next: Function) {
   try {
-    const vote = await this.populate("ref.document");
+    const vote = await Vote.findById(this.id).populate("ref.document");
     await vote.ref.document.update({
       $inc: {
-        "voting.sum": vote.impact,
+        "voting.sum": this.impact,
       }
     });
+    next();
   } catch (e) {
     next(e);
   }
 };
 
-VoteSchema.pre("save", true, function (next, done) {
-  this.updateReferenced(next, done);
+VoteSchema.post("save", function (doc, next) {
+  (<any>doc).updateReferenced(next);
 });
 
 VoteSchema.pre("remove", true, function (next, done) {
+  next();
+
   // undo vote impact
   this.impact = -this.impact;
-  this.updateReferenced(next, done);
+  this.updateReferenced(done);
 });
 
 export const Vote = mongoose.model<IVote>("Vote", VoteSchema) as IVoteModel;
