@@ -94,6 +94,13 @@ export function votingPlugin<T extends Document>
     }
   });
 
+  schema.virtual("voting.votes", {
+    ref: "Vote",
+    localField: "_id",
+    foreignField: "ref.document",
+    justOne: false
+  });
+
   schema.methods.vote = function (impact: number = 1, user: T, cb?: Function) {
     if (options.validate.validator(impact)) {
       Vote.find({author: user.id, "ref.document": this.id}, (err: Error, votes: IVote[]) => {

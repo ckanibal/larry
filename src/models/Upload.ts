@@ -69,7 +69,8 @@ const UploadSchema = new Schema({
     ref: "Upload",
   }]
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true }
 });
 
 UploadSchema.plugin(mongoosePaginate);

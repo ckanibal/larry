@@ -52,6 +52,10 @@ export class UploadController extends Controller {
       req.upload = await Upload
         .findById(id)
         .populate("author", "username")
+        .populate({
+          path: "voting.votes",
+          match: {author: {$eq: (typeof req.user !== "undefined") ? req.user.id : undefined}}
+        })
         .populate("pic")
         .populate("files")
         .populate("dependencies");

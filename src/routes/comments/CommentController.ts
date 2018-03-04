@@ -7,6 +7,7 @@ import { User, IUser } from "../../models/User";
 import httpStatus = require("http-status");
 import { VotingController } from "../voting/VotingController";
 import auth = require("../../config/auth");
+import _ = require("lodash");
 
 
 export class CommentController extends Controller {
@@ -83,7 +84,10 @@ export class CommentController extends Controller {
     if (!user) {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
     }
+
+    req.body = _.pick(req.body, ["body"]);
     req.body.author = user;
+    req.body.upload = req.upload;
 
     const comment = await Comment.create(req.body);
     res.json(comment);

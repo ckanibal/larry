@@ -6,6 +6,7 @@ import { CommentController } from "./comments/CommentController";
 import { AuthController } from "./authentication/AuthController";
 import { MediaController } from "./media/MediaController";
 import { BaseController } from "./BaseController";
+import auth = require("../config/auth");
 
 const router = express.Router();
 // router.use("/api", require("./api"));
