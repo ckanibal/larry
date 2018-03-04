@@ -1,7 +1,7 @@
 FROM node:9-alpine
 WORKDIR /usr/src/larry
 RUN apk update && apk upgrade && \
-    apk add --no-cache bash git openssh
+    apk add --no-cache bash git openssh python make g++
 
 # Install app dependencies
 COPY package*.json ./
