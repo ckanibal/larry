@@ -35,7 +35,12 @@ export class CommentController extends Controller {
 
   @ObjectIdParam
   private async commentParam(req: Request, res: Response, next: NextFunction, id: string) {
-    req.comment = await Comment.findById(id);
+    req.comment = await Comment.findById(id)
+      .populate("author", "username")
+      .populate({
+        path: "voting.votes",
+        match: {author: {$eq: (typeof req.user !== "undefined") ? req.user.id : undefined}}
+      });
     if (req.comment) {
       next();
     } else {

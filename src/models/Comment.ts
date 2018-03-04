@@ -35,6 +35,7 @@ const CommentSchema = new mongoose.Schema({
     index: true,
   }
 }, {
+  toJSON: { virtuals: true },
   timestamps: true
 });
 CommentSchema.plugin(mongoosePaginate);
