@@ -9,7 +9,6 @@ import { User, IUser } from "./User";
 /**
  * Voting Model
  */
-
 export interface IVote extends Document {
   impact: number;
   author: IUser;
@@ -49,7 +48,8 @@ VoteSchema.methods.updateReferenced = async function (next: Function) {
     await vote.ref.document.update({
       $inc: {
         "voting.sum": this.impact,
-      }
+      },
+      updatedAt: vote.ref.document.updatedAt // TODO: find a better solution to disable timestamp-update
     });
     next();
   } catch (e) {
