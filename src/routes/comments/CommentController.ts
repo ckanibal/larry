@@ -8,6 +8,7 @@ import httpStatus = require("http-status");
 import { VotingController } from "../voting/VotingController";
 import auth = require("../../config/auth");
 import _ = require("lodash");
+import { UploadController } from "../uploads/UploadController";
 
 
 export class CommentController extends Controller {
@@ -74,10 +75,10 @@ export class CommentController extends Controller {
       comments
     };
     res.format({
-      html: function() {
+      html: function () {
         res.render("comments/index", response);
       },
-      json: function() {
+      json: function () {
         res.json(response);
       }
     });
@@ -90,7 +91,7 @@ export class CommentController extends Controller {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
     }
 
-    req.body = _.pick(req.body, ["body"]);
+    req.body = _.omit(req.body, CommentController.RESERVED_FIELDS);
     req.body.author = user;
     req.body.upload = req.upload;
 
@@ -100,10 +101,10 @@ export class CommentController extends Controller {
 
   public async get(req: Request, res: Response, next: NextFunction) {
     res.format({
-      html: function() {
+      html: function () {
         res.render("comments/get", req.comment);
       },
-      json: function() {
+      json: function () {
         res.json(req.comment);
       }
     });
@@ -111,7 +112,7 @@ export class CommentController extends Controller {
 
   public async put(req: Request, res: Response, next: NextFunction) {
     if (req.comment.author.id.toString() === req.user.id.toString()) {
-      const comment = await Comment.findByIdAndUpdate(req.comment.id, req.body);
+      const comment = await Comment.findByIdAndUpdate(req.comment.id, _.omit(req.body, CommentController.RESERVED_FIELDS));
       res.json(comment);
     }
   }

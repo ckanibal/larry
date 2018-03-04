@@ -105,6 +105,7 @@ export class UploadController extends Controller {
     if (!user) {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
     }
+    req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
     req.body.author = user;
 
     const upload = await Upload.create(req.body);
