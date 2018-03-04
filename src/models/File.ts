@@ -7,7 +7,6 @@ import * as fs from "fs";
 import { Readable } from "stream";
 
 import * as crypto from "crypto";
-import * as blake2 from "blake2";
 import { IUser } from "./User";
 
 
@@ -25,7 +24,9 @@ export interface IFile extends Document {
 
 export interface IFileModel extends PaginateModel<IFile> {
   uploadFromFs(file: {}, options: {}): Promise<IFile>;
+
   createReadStream(file: any): Readable;
+
   hashify(): Promise<IFile>;
 }
 
@@ -62,31 +63,37 @@ const FileSchema = new mongoose.Schema({
   collection: "fs.files"
 });
 
-FileSchema.methods.hashify = function() {
+FileSchema.methods.hashify = function () {
   return new Promise((resolve, reject) => {
     const readstream = mongoose.gfs.createReadStream({
       _id: this.id,
     });
     const sha1 = crypto.createHash("sha1");
-    const blake2b = blake2.createHash("blake2b");
-
+    let blake2b: any = undefined;
+    try {
+      blake2b = crypto.createHash("blake2b") || require("blake2").createHash("blake2b");
+    } catch {
+      console.warn("No working blake2b implementation found.");
+    }
     readstream.on("error", reject);
     readstream.on("data", (chunk: Buffer) => {
       sha1.update(chunk);
-      blake2b.update(chunk);
+      if (blake2b) blake2b.update(chunk);
     });
     readstream.on("end", () => {
+      const hashes = {};
+      Object.assign(hashes,
+        {md5: this.md5},
+        {sha1: sha1.digest("hex")},
+        blake2b ? {blake2b: blake2b.digest("hex")} : undefined
+      );
       this.model("File").findByIdAndUpdate(this._id, {
         $set: {
           metadata: {
-            hashes: {
-              sha1: sha1.digest("hex"),
-              blake2b: blake2b.digest("hex"),
-              md5: this.md5,
-            }
+            hashes
           }
         }
-      }, { new: true }, (err: Error, doc: mongoose.Document) => {
+      }, {new: true}, (err: Error, doc: mongoose.Document) => {
         if (err) {
           reject(err);
         }
@@ -96,13 +103,13 @@ FileSchema.methods.hashify = function() {
   });
 };
 
-FileSchema.methods.createReadStream = function() {
+FileSchema.methods.createReadStream = function () {
   return mongoose.gfs.createReadStream({
     _id: this.id,
   });
 };
 
-FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hashes: boolean }) {
+FileSchema.statics.uploadFromFs = function (file: any, {hashes = false}: { hashes: boolean }) {
   return new Promise((resolve, reject) => {
     const gridStream = mongoose.gfs.createWriteStream({
       filename: file.originalname,
@@ -110,13 +117,18 @@ FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hash
     });
 
     const sha1 = hashes ? crypto.createHash("sha1") : undefined;
-    const blake2b = hashes ? blake2.createHash("blake2b") : undefined;
+    let blake2b: any = undefined;
+    try {
+      blake2b = crypto.createHash("blake2b") || require("blake2").createHash("blake2b");
+    } catch {
+      console.warn("No working blake2b implementation found.");
+    }
 
     fs.createReadStream(file.path)
       .on("data", (chunk: Buffer) => {
         if (hashes) {
           sha1.update(chunk);
-          blake2b.update(chunk);
+          if (blake2b) blake2b.update(chunk);
         }
       })
       .on("error", reject)
@@ -132,14 +144,14 @@ FileSchema.statics.uploadFromFs = function(file: any, { hashes = false }: { hash
 
       if (hashes) {
         metadata.hashes.sha1 = sha1.digest("hex");
-        metadata.hashes.blake2b = blake2b.digest("hex");
+        if (blake2b) metadata.hashes.blake2b = blake2b.digest("hex");
       }
 
       this.findByIdAndUpdate(file._id, {
         $set: {
           metadata
         }
-      }, { new: true }, (err: Error, file: IFile) => {
+      }, {new: true}, (err: Error, file: IFile) => {
         if (err) {
           reject(err);
         }
