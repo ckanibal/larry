@@ -5,7 +5,7 @@ services:
     container_name: "larry"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://database
+      - MONGODB_URI=mongodb://database/larry
       - PORT=8080
       - UPLOAD_PATH=upload/
       - CLONKSPOT_URL=https://clonkspot.org/api/auth/jwt
