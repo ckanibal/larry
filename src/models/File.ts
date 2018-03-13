@@ -9,8 +9,8 @@ import { GridFSStorage } from "./GridFSStorage";
 import { Hash, HexBase64Latin1Encoding } from "crypto";
 import { FSStorage } from "./FSStorage";
 
-// const storage = new GridFSStorage();
-const storage = new FSStorage();
+const storage = new GridFSStorage();
+// const storage = new FSStorage();
 
 export interface IFile extends Document {
   author: IUser;
