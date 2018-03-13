@@ -1,14 +1,16 @@
 // models/File.ts
-
 import { Schema, PaginateModel, Document } from "mongoose";
 import { mongoose } from "../config/database";
-
 import * as fs from "fs";
 import { Readable } from "stream";
-
 import * as crypto from "crypto";
 import { IUser } from "./User";
+import { GridFSStorage } from "./GridFSStorage";
+import { Hash, HexBase64Latin1Encoding } from "crypto";
+import { FSStorage } from "./FSStorage";
 
+// const storage = new GridFSStorage();
+const storage = new FSStorage();
 
 export interface IFile extends Document {
   author: IUser;
@@ -23,11 +25,9 @@ export interface IFile extends Document {
 }
 
 export interface IFileModel extends PaginateModel<IFile> {
-  uploadFromFs(file: {}, options: {}): Promise<IFile>;
+  upload(file: {}, options: {}): Promise<IFile>;
 
   createReadStream(file: any): Readable;
-
-  hashify(): Promise<IFile>;
 }
 
 const FileSchema = new mongoose.Schema({
@@ -60,92 +60,101 @@ const FileSchema = new mongoose.Schema({
     ref: "User"
   },
 }, {
-  collection: "fs.files"
+  collection: "fs.files",
+  strict: false,
 });
 
-FileSchema.methods.hashify = function () {
-  return new Promise((resolve, reject) => {
-    const readstream = mongoose.gfs.createReadStream({
-      _id: this.id,
-    });
-    const sha1 = crypto.createHash("sha1");
-    let blake2b: any = undefined;
-    try {
-      blake2b = crypto.createHash("blake2b") || require("blake2").createHash("blake2b");
-    } catch {
-      console.warn("No working blake2b implementation found.");
+// FileSchema.methods.hashify = function () {
+//   return new Promise((resolve, reject) => {
+//     const readstream = mongoose.gfs.createReadStream({
+//       _id: this.id,
+//     });
+//     const sha1 = crypto.createHash("sha1");
+//     let blake2b: any = undefined;
+//     try {
+//       blake2b = crypto.createHash("blake2b") || require("blake2").createHash("blake2b");
+//     } catch {
+//       console.warn("No working blake2b implementation found.");
+//     }
+//     readstream.on("error", reject);
+//     readstream.on("data", (chunk: Buffer) => {
+//       sha1.update(chunk);
+//       if (blake2b) blake2b.update(chunk);
+//     });
+//     readstream.on("end", () => {
+//       const hashes = {};
+//       Object.assign(hashes,
+//         {md5: this.md5},
+//         {sha1: sha1.digest("hex")},
+//         blake2b ? {blake2b: blake2b.digest("hex")} : undefined
+//       );
+//       this.model("File").findByIdAndUpdate(this._id, {
+//         $set: {
+//           metadata: {
+//             hashes
+//           }
+//         }
+//       }, {new: true}, (err: Error, doc: mongoose.Document) => {
+//         if (err) {
+//           reject(err);
+//         }
+//         resolve(doc);
+//       });
+//     });
+//   });
+// };
+
+/**
+ * Calculates multiple hashes with a consistent interface
+ */
+class MultiHash {
+  private _hashes: Map<string, Hash>;
+
+  constructor(...hashes: string[]) {
+    this._hashes = new Map<string, Hash>();
+    for (const hash of hashes) {
+      try {
+        const h = crypto.createHash(hash) || require(hash).createHash(hash);
+        this._hashes.set(hash, h);
+      } catch (e) {
+        console.warn("No suitable implementation available for hash", hash);
+      }
     }
-    readstream.on("error", reject);
-    readstream.on("data", (chunk: Buffer) => {
-      sha1.update(chunk);
-      if (blake2b) blake2b.update(chunk);
-    });
-    readstream.on("end", () => {
-      const hashes = {};
-      Object.assign(hashes,
-        {md5: this.md5},
-        {sha1: sha1.digest("hex")},
-        blake2b ? {blake2b: blake2b.digest("hex")} : undefined
-      );
-      this.model("File").findByIdAndUpdate(this._id, {
-        $set: {
-          metadata: {
-            hashes
-          }
-        }
-      }, {new: true}, (err: Error, doc: mongoose.Document) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(doc);
-      });
-    });
-  });
-};
+  }
 
-FileSchema.methods.createReadStream = function () {
-  return mongoose.gfs.createReadStream({
-    _id: this.id,
-  });
-};
-
-FileSchema.statics.uploadFromFs = function (file: any, {hashes = false}: { hashes: boolean }) {
-  return new Promise((resolve, reject) => {
-    const gridStream = mongoose.gfs.createWriteStream({
-      filename: file.originalname,
-      content_type: file.mimetype,
-    });
-
-    const sha1 = hashes ? crypto.createHash("sha1") : undefined;
-    let blake2b: any = undefined;
-    try {
-      blake2b = crypto.createHash("blake2b") || require("blake2").createHash("blake2b");
-    } catch {
-      console.warn("No working blake2b implementation found.");
+  update(data: string | Buffer): MultiHash {
+    for (const hash of this._hashes.values()) {
+      hash.update(data);
     }
+    return this;
+  }
+
+  digest(encoding: HexBase64Latin1Encoding = "hex"): Object {
+    return [...this._hashes.entries()].reduce(function (result: any, [hash, h]: [string, Hash]) {
+      result[hash] = h.digest(encoding);
+      return result;
+    }, {});
+  }
+}
+
+const HASHES = ["sha1", "blake2b"];
+FileSchema.statics.upload = async function (file: any, {hashes = false}: { hashes: boolean }) {
+  return new Promise(async (resolve, reject) => {
+    const writeStream = await storage.store(file);
+    const hashList = hashes ? HASHES : [];
+    const multihash = new MultiHash(...hashList);
 
     fs.createReadStream(file.path)
       .on("data", (chunk: Buffer) => {
-        if (hashes) {
-          sha1.update(chunk);
-          if (blake2b) blake2b.update(chunk);
-        }
+        multihash.update(chunk);
       })
       .on("error", reject)
-      .pipe(gridStream);
+      .pipe(writeStream);
 
-    gridStream.on("error", reject);
-    gridStream.on("close", (file: IFile) => {
-      const metadata: { hashes: { md5?: string, sha1?: string, blake2b?: string } } = {
-        hashes: {
-          md5: file.md5,
-        }
-      };
-
-      if (hashes) {
-        metadata.hashes.sha1 = sha1.digest("hex");
-        if (blake2b) metadata.hashes.blake2b = blake2b.digest("hex");
-      }
+    writeStream.on("error", reject);
+    writeStream.on("close", (file: IFile) => {
+      const hashes = multihash.digest();
+      const metadata = {hashes};
 
       this.findByIdAndUpdate(file._id, {
         $set: {
@@ -159,6 +168,10 @@ FileSchema.statics.uploadFromFs = function (file: any, {hashes = false}: { hashe
       });
     });
   });
+};
+
+FileSchema.methods.createReadStream = async function (): Promise<Readable> {
+  return await storage.retrieve(this);
 };
 
 export const File = mongoose.model<IFile>("File", FileSchema) as IFileModel;

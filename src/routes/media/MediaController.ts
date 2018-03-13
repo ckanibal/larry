@@ -2,8 +2,8 @@
 
 import { Controller, ObjectIdParam } from "../Controller";
 import { NextFunction, Request, Response } from "express";
-import httpStatus = require("http-status");
 import { File, IFile } from "../../models/File";
+import httpStatus = require("http-status");
 import auth = require("../../config/auth");
 import upload = require("../../config/multer");
 import * as fs from "fs";
@@ -55,7 +55,7 @@ export class MediaController extends Controller {
 
     if (typeof req.file !== "undefined") {
       // upload to gridfs
-      const file = await File.uploadFromFs(req.file, {hashes: req.query.hashify});
+      const file = await File.upload(req.file, {hashes: req.query.hashify});
       fs.unlink(req.file.path, err => {
         if (err == undefined) {
           // seems good
@@ -74,20 +74,25 @@ export class MediaController extends Controller {
    * @query download (boolean) Download file
    */
   public async get(req: Request, res: Response, next: NextFunction) {
-    req.query.download = (typeof req.query.download !== "undefined") || false;
+    try {
+      req.query.download = (typeof req.query.download !== "undefined") || false;
 
-    res.set({
-      "ETag": req.media.md5,
-      "Content-Type": req.media.contentType,
-      "Content-Length": req.media.length,
-      "Content-Disposition": req.query.download ? `attachment; filename="${req.media.filename}"` : "inline",
-    });
+      res.set({
+        "ETag": req.media.md5,
+        "Content-Type": req.media.contentType,
+        "Content-Length": req.media.length,
+        "Content-Disposition": req.query.download ? `attachment; filename="${req.media.filename}"` : "inline",
+      });
 
-    if (req.stale) {
-      req.media.createReadStream().pipe(res);
-    } else {
-      // cache hit <3
-      res.sendStatus(httpStatus.NOT_MODIFIED);
+      if (req.stale) {
+        const stream = await req.media.createReadStream();
+        stream.pipe(res);
+      } else {
+        // cache hit <3
+        res.sendStatus(httpStatus.NOT_MODIFIED);
+      }
+    } catch (e) {
+      next(e);
     }
   }
 
