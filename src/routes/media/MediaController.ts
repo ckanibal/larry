@@ -50,7 +50,7 @@ export class MediaController extends Controller {
    * Upload a file
    * @query hashify (boolean) Add hashes for file
    */
-  public async post (req: Request, res: Response, next: NextFunction) {
+  public async post(req: Request, res: Response, next: NextFunction) {
     req.query.hashify = (typeof req.query.hashify !== "undefined") || false;
 
     if (typeof req.file !== "undefined") {
@@ -101,7 +101,7 @@ export class MediaController extends Controller {
    */
   public async delete(req: Request, res: Response, next: NextFunction) {
     if (req.media.author.toString() === req.user.id.toString()) {
-      req.media.remove().then(function() {
+      req.media.remove().then(function () {
         res.sendStatus(httpStatus.NO_CONTENT);
       }).catch(next);
     } else {

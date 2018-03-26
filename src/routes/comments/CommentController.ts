@@ -8,8 +8,7 @@ import httpStatus = require("http-status");
 import { VotingController } from "../voting/VotingController";
 import auth = require("../../config/auth");
 import _ = require("lodash");
-import { UploadController } from "../uploads/UploadController";
-
+import { EventStreamSocket } from "../../concerns/EventStream";
 
 export class CommentController extends Controller {
   protected _voting: VotingController;
@@ -22,16 +21,16 @@ export class CommentController extends Controller {
     this.router.use(this.checkAuthentication);
     this.router.param("comment", this.commentParam);
 
-    this.router.get("/", this.checkPermissions(this.getRecord), this.index);
+    this.router.get("/", this.index.bind(this));
 
     // Subresources
     this.router.use("/:comment/vote", this._voting.router);
 
     // CRUD
-    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post);
-    this.router.get("/:comment", this.checkPermissions(this.getRecord), this.get);
-    this.router.put("/:comment", auth.required, this.checkPermissions(this.getRecord), this.put);
-    this.router.delete("/:comment", auth.required, this.checkPermissions(this.getRecord), this.delete);
+    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post.bind(this));
+    this.router.get("/:comment", this.checkPermissions(this.getRecord), this.get.bind(this));
+    this.router.put("/:comment", auth.required, this.checkPermissions(this.getRecord), this.put.bind(this));
+    this.router.delete("/:comment", auth.required, this.checkPermissions(this.getRecord), this.delete.bind(this));
   }
 
   @ObjectIdParam
@@ -62,7 +61,10 @@ export class CommentController extends Controller {
 
   @PaginationParams
   public async index(req: Request, res: Response, next: NextFunction) {
-    const {query: {limit, page, sort = {createdAt: -1}, query = {upload: req.upload.id}}} = req;
+    const {query: {limit, page, sort = {createdAt: -1}, query = {}}} = req;
+    if (req.upload) {
+      query["upload"] = req.upload.id;
+    }
     const {docs: comments, ...pagination} = await Comment.paginate(query,
       {
         sort,
@@ -80,6 +82,10 @@ export class CommentController extends Controller {
       },
       json: function () {
         res.json(response);
+      },
+      "text/event-stream": () => {
+        const socket = new EventStreamSocket(req, res, next);
+        this.pipe(socket);
       }
     });
     next();
@@ -93,9 +99,10 @@ export class CommentController extends Controller {
 
     req.body = _.omit(req.body, CommentController.RESERVED_FIELDS);
     req.body.author = user;
-    req.body.upload = req.upload;
+    req.body.upload = req.upload || req.body.upload;
 
-    const comment = await Comment.create(req.body);
+    const comment = await new Comment(req.body).save();
+    this.push(JSON.stringify(comment.toJSON()));
     res.json(comment);
   }
 

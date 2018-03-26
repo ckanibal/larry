@@ -3,14 +3,16 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { User, IUser } from "../models/User";
 
 passport.use(new LocalStrategy({
-  usernameField: "user[email]",
+  usernameField: "user[identity]",
   passwordField: "user[password]"
-}, function(email: string, password: string, done: any) {
-  User.findOne({email: email}).then(function(user: IUser) {
+}, async function (identity: string, password: string, done: any) {
+  try {
+    const user = await  User.findOne({$or: [{email: identity}, {username: identity}]});
     if (!user || !user.validPassword(password)) {
-      return done(undefined, false, {errors: {"email or password": "is invalid"}});
+      return done(undefined, false, {errors: {"identity or password": "is invalid"}});
     }
-
     return done(undefined, user);
-  }).catch(done);
+  } catch (err) {
+    return done(err);
+  }
 }));

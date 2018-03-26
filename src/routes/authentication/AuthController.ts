@@ -52,8 +52,8 @@ export class AuthController extends Controller {
       return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user": "can't be blank"}});
     }
 
-    if (!req.body.user.email) {
-      return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user.email": "can't be blank"}});
+    if (!req.body.user.identity) {
+      return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({errors: {"user.identity": "can't be blank"}});
     }
 
     if (!req.body.user.password) {

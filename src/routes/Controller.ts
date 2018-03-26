@@ -4,7 +4,7 @@ import * as validator from "validator";
 import httpStatus = require("http-status");
 import { IUser } from "../models/User";
 import auth = require("../config/auth");
-import * as pluralize from "pluralize";
+import { Readable } from "stream";
 
 export interface IController {
   router: Router;
@@ -14,12 +14,13 @@ interface RecordWithOwnership {
   author: IUser;
 }
 
-export abstract class Controller implements IController {
+export abstract class Controller extends Readable implements IController {
   public router: Router;
 
   protected static RESERVED_FIELDS = ["_id", "author", "__v", "created_at", "updated_at", "voting"];
 
   public constructor() {
+    super();
     this.router = Router();
   }
 
@@ -87,6 +88,15 @@ export abstract class Controller implements IController {
       res.locals.user = req.user;
       next(error);
     });
+  }
+
+  /**
+   *
+   * @param {number} size
+   * @private
+   */
+  public _read(size?: number) {
+    // no manual read
   }
 }
 

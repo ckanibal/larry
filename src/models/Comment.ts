@@ -1,7 +1,7 @@
 // models/Comment.ts
 
 import { mongoose } from "../config/database";
-import { Schema, Document, PaginateModel } from "mongoose";
+import { Schema, Document, PaginateModel, DocumentToObjectOptions } from "mongoose";
 import mongoosePaginate = require("mongoose-paginate");
 import { votingPlugin, Votable } from "./Vote";
 
@@ -12,12 +12,13 @@ export interface IComment extends Document, Votable {
   body: string;
   author: IUser;
   upload: IUpload;
+
+  toJSON(options?: DocumentToObjectOptions): Object;
 }
 
 export interface ICommentModel extends PaginateModel<IComment> {
   // tbd.
 }
-
 
 const CommentSchema = new mongoose.Schema({
   body: {
