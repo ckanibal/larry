@@ -17,6 +17,8 @@ export interface ITag extends Document {
   slug: string;
   author: IUser;
   upload: IUpload;
+
+  toXML(options: {}): Object;
 }
 
 export interface ITagModel extends Model<ITag> {

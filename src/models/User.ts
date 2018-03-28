@@ -9,6 +9,8 @@ import jwt = require("jsonwebtoken");
 
 
 import { Upload, IUpload } from "./Upload";
+import * as xmlbuilder from "xmlbuilder";
+import { IFile } from "./File";
 
 /**
  * User Model
@@ -37,6 +39,9 @@ export interface IUser extends Document {
 
   // Authorization
   isAdmin(): boolean;
+
+  // Serialization
+  toXML(options?: {}): any;
 }
 
 export interface IUserModel extends PaginateModel<IUser> {
@@ -101,6 +106,13 @@ UserSchema.methods.generateJWT = function () {
   }, secret);
 };
 
+if (!UserSchema.options.toObject) UserSchema.options.toObject = {};
+UserSchema.options.toObject.transform = function (doc: IUser, ret: any, options: {}) {
+  // convert the id to a plain string
+  ret._id = doc._id.toString();
+  return ret;
+};
+
 UserSchema.methods.toAuthJSON = function () {
   return {
     username: this.username,
@@ -140,6 +152,13 @@ UserSchema.methods.isFavorite = function (id: number) {
 
 UserSchema.methods.isAdmin = function() {
   return this.role === "admin";
+};
+
+UserSchema.methods.toXML = function(options?: {}) {
+  return xmlbuilder.create("author")
+    .ele("_id", this.id).up()
+    .ele("username", this.username).up()
+  ;
 };
 
 export const User = mongoose.model<IUser>("User", UserSchema) as IUserModel;

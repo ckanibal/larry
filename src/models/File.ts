@@ -8,6 +8,8 @@ import { IUser } from "./User";
 import { GridFSStorage } from "./GridFSStorage";
 import { Hash, HexBase64Latin1Encoding } from "crypto";
 import { FSStorage } from "./FSStorage";
+import * as xmlbuilder from "xmlbuilder";
+import { IUpload } from "./Upload";
 
 const storage = new GridFSStorage();
 // const storage = new FSStorage();
@@ -22,12 +24,23 @@ export interface IFile extends Document {
   contentType: string;
   aliases: string[];
   metadata: {};
+
+  /**
+   * Serialize as XML
+   * @param {{}} options
+   */
+  toXML(options?: {}): any;
+
+  /**
+   * Retrieves a Readable stream from the storage engine
+   * @param file
+   * @returns {"stream".internal.Readable}
+   */
+  createReadStream(file: any): Readable;
 }
 
 export interface IFileModel extends PaginateModel<IFile> {
   upload(file: {}, options: {}): Promise<IFile>;
-
-  createReadStream(file: any): Readable;
 }
 
 const FileSchema = new mongoose.Schema({
@@ -63,46 +76,6 @@ const FileSchema = new mongoose.Schema({
   collection: "fs.files",
   strict: false,
 });
-
-// FileSchema.methods.hashify = function () {
-//   return new Promise((resolve, reject) => {
-//     const readstream = mongoose.gfs.createReadStream({
-//       _id: this.id,
-//     });
-//     const sha1 = crypto.createHash("sha1");
-//     let blake2b: any = undefined;
-//     try {
-//       blake2b = crypto.createHash("blake2b") || require("blake2").createHash("blake2b");
-//     } catch {
-//       console.warn("No working blake2b implementation found.");
-//     }
-//     readstream.on("error", reject);
-//     readstream.on("data", (chunk: Buffer) => {
-//       sha1.update(chunk);
-//       if (blake2b) blake2b.update(chunk);
-//     });
-//     readstream.on("end", () => {
-//       const hashes = {};
-//       Object.assign(hashes,
-//         {md5: this.md5},
-//         {sha1: sha1.digest("hex")},
-//         blake2b ? {blake2b: blake2b.digest("hex")} : undefined
-//       );
-//       this.model("File").findByIdAndUpdate(this._id, {
-//         $set: {
-//           metadata: {
-//             hashes
-//           }
-//         }
-//       }, {new: true}, (err: Error, doc: mongoose.Document) => {
-//         if (err) {
-//           reject(err);
-//         }
-//         resolve(doc);
-//       });
-//     });
-//   });
-// };
 
 /**
  * Calculates multiple hashes with a consistent interface
@@ -172,6 +145,20 @@ FileSchema.statics.upload = async function (file: any, {hashes = false}: { hashe
 
 FileSchema.methods.createReadStream = async function (): Promise<Readable> {
   return await storage.retrieve(this);
+};
+
+if (!FileSchema.options.toObject) FileSchema.options.toObject = {};
+FileSchema.options.toObject.transform = function (doc: IFile, ret: any, options: {}) {
+  // convert the id to a plain string
+  ret._id = doc._id.toString();
+  return ret;
+};
+
+FileSchema.methods.toXML = function(options?: {root: string}) {
+  const {_id: _, ...fields} = this.toObject();
+  return xmlbuilder.create((options && options.root) || "file")
+    .ele("id", this.id).up()
+    .ele(fields).up();
 };
 
 export const File = mongoose.model<IFile>("File", FileSchema) as IFileModel;

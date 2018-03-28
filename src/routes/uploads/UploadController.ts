@@ -1,9 +1,8 @@
 // routes/uploads/UploadController.ts
 
 import { NextFunction, Request, Response } from "express";
-import * as pluralize from "pluralize";
 import httpStatus = require("http-status");
-import jsonxml = require("jsontoxml");
+import * as builder from "xmlbuilder";
 import { Controller, PaginationParams, ObjectIdParam } from "../Controller";
 import { Upload, IUpload } from "../../models/Upload";
 import { IUser, User } from "../../models/User";
@@ -93,7 +92,21 @@ export class UploadController extends Controller {
         res.json(response);
       },
       "application/xml": function () {
-        res.send(jsonxml(JSON.stringify({resource: response})));
+        const xml = builder.create("resource")
+          .att("title", "uploads")
+          .ele("_meta")
+          .ele("max_results", pagination.limit).up()
+          .ele("page", pagination.page).up()
+          .ele("total", pagination.total).up()
+          .up();
+        uploads.forEach(upload => {
+          xml.importDocument(upload.toXML({
+            href: function () {
+              return this.id;
+            }
+          }));
+        });
+        res.send(xml.end({pretty: true}));
       }
     });
     next();
@@ -121,7 +134,8 @@ export class UploadController extends Controller {
         res.json(req.upload);
       },
       "application/xml": function () {
-        res.send(jsonxml(JSON.stringify({upload: req.upload})));
+        const xml = req.upload.toXML();
+        res.send(xml.end({pretty: true}));
       }
     });
   }
