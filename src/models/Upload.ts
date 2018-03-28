@@ -1,5 +1,5 @@
 import { mongoose } from "../config/database";
-import { Schema, Model, Document, PaginateModel } from "mongoose";
+import { Schema, Model, Document, PaginateModel, Types } from "mongoose";
 
 import mongoosePaginate = require("mongoose-paginate");
 import slug = require("slug");
@@ -11,7 +11,7 @@ import { File, IFile } from "./File";
 import { ITag, Tag, TagSchema } from "./Tag";
 
 import { votingPlugin, Votable } from "./Vote";
-import { Types } from "mongoose";
+
 
 /**
  * Upload Model
@@ -128,28 +128,25 @@ UploadSchema.methods.updateFavoriteCount = function () {
 
 if (!UploadSchema.options.toObject) UploadSchema.options.toObject = {};
 UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: {}) {
-  // remove the _id of every document before returning the result
-  delete ret._id;
-  return ret;
-};
+  // convert ids to plain strings
+  ret._id = doc._id.toString();
+  if (!doc.populated("author")) {
+    ret.author = doc.author.toString();
+  }
+  if (!doc.populated("pic")) {
+    ret.pic = doc.pic.toString();
+  }
+  if (!doc.populated("files")) {
+    ret.files = doc.files.map((id: any) => id.toString());
+  }
+  if (!doc.populated("dependencies")) {
+    ret.dependencies = doc.dependencies.map((id: any) => id.toString());
+  }
 
-UploadSchema.methods.toXML = function (options?: { href: string, root: string }) {
-  return xmlbuilder.create((options && options.root) || "resource")
-    .att("title", "upload")
-    .att("href", (options && options.href) || "")
-    .ele("created_at", new Date(this.createdAt).toUTCString()).up()
-    .ele("updated_at", new Date(this.updatedAt).toUTCString()).up()
-    .ele("_id", this.id).up()
-    .ele("slug", this.slug).up()
-    .ele("title", this.title).up()
-    .ele("description", this.description).up()
-    .ele({"author": this.populated("author") ? this.author.toObject(options) : this.author.toString()}).up()
-    .ele("tags")
-    .ele({tag: this.tags.map((t: any) => (this.populated("tags") ? t.toObject(options) : t.toString()))}).up()
-    .up()
-    .ele({"pic": this.populated("pic") ? this.pic.toObject(options) : this.pic.toString()}).up()
-    .ele("files")
-    .ele({file: this.files.map((file: any) => (this.populated("files") ? file.toObject(options) : file.toString()))}).up();
+  ret.updatedAt = (<Date>doc.updatedAt).toUTCString();
+  ret.createdAt = (<Date>doc.createdAt).toUTCString();
+
+  return ret;
 };
 
 export const Upload = mongoose.model<IUpload>("Upload", UploadSchema) as IUploadModel;

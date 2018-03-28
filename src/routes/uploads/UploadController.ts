@@ -84,6 +84,8 @@ export class UploadController extends Controller {
       pagination,
       uploads
     };
+
+    console.log("uploads", uploads);
     res.format({
       html: function () {
         res.render("upload/index", response);
@@ -95,17 +97,13 @@ export class UploadController extends Controller {
         const xml = builder.create("resource")
           .att("title", "uploads")
           .ele("_meta")
-          .ele("max_results", pagination.limit).up()
-          .ele("page", pagination.page).up()
-          .ele("total", pagination.total).up()
+            .ele("max_results", pagination.limit).up()
+            .ele("page", pagination.page).up()
+            .ele("total", pagination.total).up()
+          .up()
+          .ele({resource: uploads.map((u: IUpload) => u.toObject())})
+          .att("title", "upload")
           .up();
-        uploads.forEach(upload => {
-          xml.importDocument(upload.toXML({
-            href: function () {
-              return this.id;
-            }
-          }));
-        });
         res.send(xml.end({pretty: true}));
       }
     });
@@ -134,7 +132,7 @@ export class UploadController extends Controller {
         res.json(req.upload);
       },
       "application/xml": function () {
-        const xml = req.upload.toXML();
+        const xml = builder.create("resource").ele(req.upload.toObject());
         res.send(xml.end({pretty: true}));
       }
     });

@@ -35,6 +35,6 @@ declare module "mongoose" {
 
   interface Document {
     updatedAt?: Date|string;
-    created?: Date|string;
+    createdAt?: Date|string;
   }
 }

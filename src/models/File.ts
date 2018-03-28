@@ -26,12 +26,6 @@ export interface IFile extends Document {
   metadata: {};
 
   /**
-   * Serialize as XML
-   * @param {{}} options
-   */
-  toXML(options?: {}): any;
-
-  /**
    * Retrieves a Readable stream from the storage engine
    * @param file
    * @returns {"stream".internal.Readable}
@@ -149,16 +143,14 @@ FileSchema.methods.createReadStream = async function (): Promise<Readable> {
 
 if (!FileSchema.options.toObject) FileSchema.options.toObject = {};
 FileSchema.options.toObject.transform = function (doc: IFile, ret: any, options: {}) {
-  // convert the id to a plain string
+  // convert ids to plain strings
   ret._id = doc._id.toString();
-  return ret;
-};
+  if (!doc.populated("author") && doc.author) {
+    ret.author = doc.author.toString();
+  }
 
-FileSchema.methods.toXML = function(options?: {root: string}) {
-  const {_id: _, ...fields} = this.toObject();
-  return xmlbuilder.create((options && options.root) || "file")
-    .ele("id", this.id).up()
-    .ele(fields).up();
+  ret.uploadDate = (<Date>doc.uploadDate).toUTCString();
+  return ret;
 };
 
 export const File = mongoose.model<IFile>("File", FileSchema) as IFileModel;

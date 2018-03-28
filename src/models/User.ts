@@ -154,11 +154,15 @@ UserSchema.methods.isAdmin = function() {
   return this.role === "admin";
 };
 
-UserSchema.methods.toXML = function(options?: {}) {
-  return xmlbuilder.create("author")
-    .ele("_id", this.id).up()
-    .ele("username", this.username).up()
-  ;
+if (!UserSchema.options.toObject) UserSchema.options.toObject = {};
+UserSchema.options.toObject.transform = function (doc: IUser, ret: any, options: {}) {
+  // convert ids to plain strings
+  ret._id = doc._id.toString();
+  if (!doc.populated("favorites") && doc.favorites) {
+    ret.favorites = doc.favorites.map((f: any) => f.toString());
+  }
+
+  return ret;
 };
 
 export const User = mongoose.model<IUser>("User", UserSchema) as IUserModel;
