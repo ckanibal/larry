@@ -148,7 +148,7 @@ FileSchema.options.toObject.transform = function (doc: IFile, ret: any, options:
     ret.author = doc.author.toString();
   }
 
-  ret.uploadDate = (<Date>doc.uploadDate).toUTCString();
+  ret.uploadDate = (<Date>doc.uploadDate).toISOString();
   return ret;
 };
 

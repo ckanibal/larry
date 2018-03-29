@@ -139,8 +139,8 @@ UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, opti
     ret.dependencies = doc.dependencies.map((id: any) => id.toString());
   }
 
-  ret.updatedAt = (<Date>doc.updatedAt).toUTCString();
-  ret.createdAt = (<Date>doc.createdAt).toUTCString();
+  ret.updatedAt = (<Date>doc.updatedAt).toISOString();
+  ret.createdAt = (<Date>doc.createdAt).toISOString();
 
   return ret;
 };
