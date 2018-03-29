@@ -85,7 +85,6 @@ export class UploadController extends Controller {
       uploads
     };
 
-    console.log("uploads", uploads);
     res.format({
       html: function () {
         res.render("upload/index", response);

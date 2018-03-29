@@ -12,11 +12,11 @@ import { URL } from "url";
 import { IUser, User } from "../../models/User";
 
 const {
-  CLONKSPOT_SECRET,
-  CLONKSPOT_URL,
-  CLONKSPOT_ISSUER,
-  CLONKSPOT_AUDIENCE = "larry",
-  CLONKSPOT_RETURN_URL,
+  JWT_AUTH_SECRET,
+  JWT_AUTH_URL,
+  JWT_AUTH_ISSUER,
+  JWT_AUTH_AUDIENCE = "larry",
+  JWT_AUTH_RETURN_URL,
 } = process.env;
 
 export class AuthController extends Controller {
@@ -29,14 +29,14 @@ export class AuthController extends Controller {
     this.router.post("/login", this.login);
     this.router.post("/logout", this.logout);
 
-    // clonkspot-Auth
-    this.router.get("/clonkspot", this.clonkspot);
-    this.router.get("/clonkspot/scotty", jwt({
-      secret: CLONKSPOT_SECRET,
+    // jwt-token-Auth
+    this.router.get("/jwtauth", this.jwtauth);
+    this.router.get("/jwtauth/scotty", jwt({
+      secret: new Buffer(JWT_AUTH_SECRET, "base64"),
       getToken: function (req: Request) {
         return url.parse(req.url).query;
       },
-    }), this.clonkspot_scotty);
+    }), this.jwtauth_scotty);
   }
 
   public async login_form(req: Request, res: Response, next: NextFunction) {
@@ -95,33 +95,33 @@ export class AuthController extends Controller {
   }
 
   // generate a Authentication Request Token
-  public async clonkspot(req: Request, res: Response, next: NextFunction) {
+  public async jwtauth(req: Request, res: Response, next: NextFunction) {
     // Token expires in 5 minutes
     const exp = Date.now() + 1000 * 60 * 5;
     // Generate random id - not used atm.
     const jti = crypto.randomBytes(16).toString("hex");
 
     const token = jsonwebtoken.sign({
-      iss: CLONKSPOT_AUDIENCE,
+      iss: JWT_AUTH_AUDIENCE,
       jti,
       // account for clock glitches
       iat: Math.floor((Date.now() - 1000 * 30) / 1000),
       exp: Math.floor(exp / 1000),
-    }, CLONKSPOT_SECRET);
+    }, new Buffer(JWT_AUTH_SECRET, "base64"));
 
-    const url = new URL(CLONKSPOT_URL);
+    const url = new URL(JWT_AUTH_URL);
     url.search = token;
 
     res.redirect(url.toString());
   }
 
 // receive Authentication Token
-  public async clonkspot_scotty(req: Request, res: Response, next: NextFunction) {
+  public async jwtauth_scotty(req: Request, res: Response, next: NextFunction) {
     let user = await User.findOne({username: req.user.sub});
     if (!user) {
       // or you could create a new account
       user = await User.create({username: req.user.sub, email: req.user.email});
     }
-    res.redirect(CLONKSPOT_RETURN_URL + user.generateJWT());
+    res.redirect(JWT_AUTH_RETURN_URL + user.generateJWT());
   }
 }
