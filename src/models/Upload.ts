@@ -123,7 +123,7 @@ UploadSchema.methods.updateFavoriteCount = function () {
 };
 
 if (!UploadSchema.options.toObject) UploadSchema.options.toObject = {};
-UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: {}) {
+UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: {xml: boolean}) {
   // convert ids to plain strings
   ret._id = doc._id.toString();
   if (!doc.populated("author") && doc.author) {
@@ -137,6 +137,9 @@ UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, opti
   }
   if (!doc.populated("dependencies") && doc.dependencies) {
     ret.dependencies = doc.dependencies.map((id: any) => id.toString());
+  }
+  if(options && options.xml == true) {
+    ret.description = {"#cdata": doc.description};
   }
 
   ret.updatedAt = (<Date>doc.updatedAt).toISOString();

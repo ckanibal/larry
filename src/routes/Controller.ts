@@ -17,7 +17,7 @@ interface RecordWithOwnership {
 export abstract class Controller extends Readable implements IController {
   public router: Router;
 
-  protected static RESERVED_FIELDS = ["_id", "author", "__v", "created_at", "updated_at", "voting"];
+  protected static RESERVED_FIELDS = ["_id", "author", "__v", "created_at", "updated_at", "voting", "deleted"];
 
   public constructor() {
     super();

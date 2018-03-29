@@ -131,7 +131,7 @@ export class UploadController extends Controller {
         res.json(req.upload);
       },
       "application/xml": function () {
-        const xml = builder.create("resource").ele(req.upload.toObject());
+        const xml = builder.create("resource").ele(req.upload.toObject({xml: true}));
         res.send(xml.end({pretty: true}));
       }
     });
