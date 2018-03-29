@@ -118,10 +118,8 @@ export class CommentController extends Controller {
   }
 
   public async put(req: Request, res: Response, next: NextFunction) {
-    if (req.comment.author.id.toString() === req.user.id.toString()) {
-      const comment = await Comment.findByIdAndUpdate(req.comment.id, _.omit(req.body, CommentController.RESERVED_FIELDS));
-      res.json(comment);
-    }
+    const comment = await Comment.findByIdAndUpdate(req.comment.id, _.omit(req.body, CommentController.RESERVED_FIELDS));
+    res.json(comment);
   }
 
   public async delete(req: Request, res: Response, next: NextFunction) {

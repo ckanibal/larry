@@ -7,9 +7,6 @@ import * as crypto from "crypto";
 import { IUser } from "./User";
 import { GridFSStorage } from "./GridFSStorage";
 import { Hash, HexBase64Latin1Encoding } from "crypto";
-import { FSStorage } from "./FSStorage";
-import * as xmlbuilder from "xmlbuilder";
-import { IUpload } from "./Upload";
 
 const storage = new GridFSStorage();
 // const storage = new FSStorage();

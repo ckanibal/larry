@@ -138,11 +138,9 @@ export class UploadController extends Controller {
   }
 
   public async put(req: Request, res: Response, next: NextFunction) {
-    if (req.upload.author.id.toString() === req.user.id.toString()) {
-      _.assign(req.upload, _.omit(req.body, UploadController.RESERVED_FIELDS));
-      const upload = await req.upload.save();
-      res.json(upload);
-    }
+    _.assign(req.upload, _.omit(req.body, UploadController.RESERVED_FIELDS));
+    const upload = await req.upload.save();
+    res.json(upload);
   }
 
   public async delete(req: Request, res: Response, next: NextFunction) {

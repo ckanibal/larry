@@ -100,12 +100,8 @@ export class MediaController extends Controller {
    * Delete a file
    */
   public async delete(req: Request, res: Response, next: NextFunction) {
-    if (req.media.author.toString() === req.user.id.toString()) {
-      req.media.remove().then(function () {
-        res.sendStatus(httpStatus.NO_CONTENT);
-      }).catch(next);
-    } else {
-      res.sendStatus(httpStatus.FORBIDDEN);
-    }
+    req.media.remove().then(function () {
+      res.sendStatus(httpStatus.NO_CONTENT);
+    }).catch(next);
   }
 }
