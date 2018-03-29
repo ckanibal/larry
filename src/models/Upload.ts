@@ -130,16 +130,16 @@ if (!UploadSchema.options.toObject) UploadSchema.options.toObject = {};
 UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: {}) {
   // convert ids to plain strings
   ret._id = doc._id.toString();
-  if (!doc.populated("author")) {
+  if (!doc.populated("author") && doc.author) {
     ret.author = doc.author.toString();
   }
-  if (!doc.populated("pic")) {
+  if (!doc.populated("pic") && doc.pic) {
     ret.pic = doc.pic.toString();
   }
-  if (!doc.populated("files")) {
+  if (!doc.populated("files") && doc.files) {
     ret.files = doc.files.map((id: any) => id.toString());
   }
-  if (!doc.populated("dependencies")) {
+  if (!doc.populated("dependencies") && doc.dependencies) {
     ret.dependencies = doc.dependencies.map((id: any) => id.toString());
   }
 
