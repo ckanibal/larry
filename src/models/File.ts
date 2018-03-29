@@ -1,5 +1,6 @@
 // models/File.ts
 import { Schema, PaginateModel, Document } from "mongoose";
+import mongooseDelete = require("mongoose-delete");
 import { mongoose } from "../config/database";
 import * as fs from "fs";
 import { Readable } from "stream";
@@ -67,6 +68,7 @@ const FileSchema = new mongoose.Schema({
   collection: "fs.files",
   strict: false,
 });
+FileSchema.plugin(mongooseDelete);
 
 /**
  * Calculates multiple hashes with a consistent interface

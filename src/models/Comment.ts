@@ -3,6 +3,7 @@
 import { mongoose } from "../config/database";
 import { Schema, Document, PaginateModel, DocumentToObjectOptions } from "mongoose";
 import mongoosePaginate = require("mongoose-paginate");
+import mongooseDelete = require("mongoose-delete");
 import { votingPlugin, Votable } from "./Vote";
 
 import { IUser } from "./User";
@@ -40,6 +41,7 @@ const CommentSchema = new mongoose.Schema({
   timestamps: true
 });
 CommentSchema.plugin(mongoosePaginate);
+CommentSchema.plugin(mongooseDelete);
 CommentSchema.plugin(votingPlugin, {
   validate: {
     validator: function (v: number) {

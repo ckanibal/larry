@@ -100,7 +100,7 @@ export class MediaController extends Controller {
    * Delete a file
    */
   public async delete(req: Request, res: Response, next: NextFunction) {
-    req.media.remove().then(function () {
+    req.media.delete().then(function () {
       res.sendStatus(httpStatus.NO_CONTENT);
     }).catch(next);
   }

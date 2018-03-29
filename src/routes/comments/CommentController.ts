@@ -123,7 +123,7 @@ export class CommentController extends Controller {
   }
 
   public async delete(req: Request, res: Response, next: NextFunction) {
-    await req.comment.remove();
+    await req.comment.delete();
     res.sendStatus(httpStatus.NO_CONTENT);
   }
 }

@@ -1,15 +1,10 @@
 import { mongoose } from "../config/database";
 import { Schema, Model, Document, PaginateModel, Types } from "mongoose";
-
 import mongoosePaginate = require("mongoose-paginate");
+import mongooseDelete = require("mongoose-delete");
 import slug = require("slug");
-import * as xmlbuilder from "xmlbuilder";
-
-
 import { User, IUser } from "./User";
 import { File, IFile } from "./File";
-import { ITag, Tag, TagSchema } from "./Tag";
-
 import { votingPlugin, Votable } from "./Vote";
 
 
@@ -90,6 +85,7 @@ const UploadSchema = new Schema({
 });
 
 UploadSchema.plugin(mongoosePaginate);
+UploadSchema.plugin(mongooseDelete);
 UploadSchema.plugin(votingPlugin, {
   validate: {
     validator: function (v: number) {

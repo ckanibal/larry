@@ -2,8 +2,8 @@
 
 import { mongoose } from "../config/database";
 import { Schema, PaginateModel, Document } from "mongoose";
-
 import mongoosePaginate = require("mongoose-paginate");
+import mongooseDelete = require("mongoose-delete");
 import crypto = require("crypto");
 import jwt = require("jsonwebtoken");
 
@@ -83,6 +83,7 @@ UserSchema.set("toJSON", {
 });
 
 UserSchema.plugin(mongoosePaginate);
+UserSchema.plugin(mongooseDelete);
 
 UserSchema.methods.validPassword = function (password: string) {
   const hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, "sha512").toString("hex");

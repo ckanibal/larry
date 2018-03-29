@@ -144,7 +144,7 @@ export class UploadController extends Controller {
   }
 
   public async delete(req: Request, res: Response, next: NextFunction) {
-    await req.upload.remove();
+    await req.upload.delete();
     res.sendStatus(httpStatus.NO_CONTENT);
   }
 
