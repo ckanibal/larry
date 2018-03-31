@@ -11,10 +11,10 @@ block content
     details
       p Author: #{author.username}
       p Voting: #{voting.sum}
-      p Keywords
-        ul.tags
-          each tag in tags
-            li= tag
+      dl
+        dt Keywords
+        each tag in tags
+          dd= tag
 
     if pic
       figure
@@ -33,7 +33,6 @@ block content
 
     section
       h1 Comments
-      - console.log(comments);
       if comments
         each comment in comments
           include ../comments/comment
