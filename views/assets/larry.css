@@ -1,0 +1,8 @@
+/**
+  Upload
+ */
+.upload img {
+  object-fit: cover;
+  max-width: 40vw;
+  max-height: 40vh;
+}
