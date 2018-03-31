@@ -1,5 +1,5 @@
 import { mongoose } from "../config/database";
-import { Schema, Model, Document, PaginateModel, Types } from "mongoose";
+import { Schema, Model, Document, PaginateModel, Types, DocumentToObjectOptions } from "mongoose";
 import mongoosePaginate = require("mongoose-paginate");
 import mongooseDelete = require("mongoose-delete");
 import slug = require("slug");
@@ -25,10 +25,10 @@ export interface IUpload extends Document, Votable {
   meta: any;
 
   /**
-   * Serialize as XML
-   * @param {{}} options
+   * Serialize as object
+   * @param options
    */
-  toXML(options?: {}): any;
+  toObject(options?: { xml?: boolean } | DocumentToObjectOptions): any;
 }
 
 export interface IUploadModel extends PaginateModel<IUpload> {
@@ -123,7 +123,7 @@ UploadSchema.methods.updateFavoriteCount = function () {
 };
 
 if (!UploadSchema.options.toObject) UploadSchema.options.toObject = {};
-UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: {xml: boolean}) {
+UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: { xml: boolean }) {
   // convert ids to plain strings
   ret._id = doc._id.toString();
   if (!doc.populated("author") && doc.author) {
@@ -138,7 +138,7 @@ UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, opti
   if (!doc.populated("dependencies") && doc.dependencies) {
     ret.dependencies = doc.dependencies.map((id: any) => id.toString());
   }
-  if(options && options.xml == true) {
+  if (options && options.xml == true) {
     ret.description = {"#cdata": doc.description};
   }
 

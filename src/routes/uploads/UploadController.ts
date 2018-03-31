@@ -100,7 +100,7 @@ export class UploadController extends Controller {
             .ele("page", pagination.page).up()
             .ele("total", pagination.total).up()
           .up()
-          .ele({resource: uploads.map((u: IUpload) => u.toObject())})
+          .ele({resource: uploads.map((u: IUpload) => u.toObject({xml: true}))})
           .att("title", "upload")
           .up();
         res.send(xml.end({pretty: true}));
