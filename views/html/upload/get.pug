@@ -7,3 +7,36 @@ block main
   h1= pageTitle
 
 block content
+  details
+    p Author: #{author.username}
+    p Voting: #{voting.sum}
+    p Keywords
+      ul.tags
+        each tag in tags
+          li= tag
+
+  if pic
+    figure
+      img(src=appdir+`/media/${pic.id}` alt=pic.filename)
+
+  section
+    h1 Description
+    p= description
+
+  section
+    h1 Downloads
+    ul.files
+      each file in files
+        li
+          a(href=appdir+`/media/${file.id}` alt=file.title)= file.title
+
+  section
+    h1 Comments
+    - console.log(comments);
+    if comments
+      each comment in comments
+        include ../comments/comment
+      <article><!-- comment 1--></article>
+      <article><!-- comment 2--></article>
+      <article><!-- comment 3--></article>
+

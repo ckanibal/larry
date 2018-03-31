@@ -1,4 +1,12 @@
-comment.comment
-  h3
-    a(href='/comment/' + comment._id, title=comment._id) #{comment.author.username}
-  p= comment.body
+article(itemscope itemtype="https://schema.org/UserComments")
+  header
+    | on
+    |
+    time(itemprop="commentTime" datetime=comment.updatedAt)= comment.updatedAt
+    |
+    |
+    span(itemprop="creator", itemscope itemtype="http://schema.org/Person")
+      span(itemprop="name")= comment.author.username
+    |
+    | said
+  p(itemprop="commentText")= comment.body

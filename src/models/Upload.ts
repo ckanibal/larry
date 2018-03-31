@@ -81,7 +81,8 @@ const UploadSchema = new Schema({
   }]
 }, {
   timestamps: true,
-  toJSON: {virtuals: true}
+  toJSON: {virtuals: true},
+  toObject: {virtuals: true},
 });
 
 UploadSchema.plugin(mongoosePaginate);
@@ -93,6 +94,13 @@ UploadSchema.plugin(votingPlugin, {
     },
     message: "Vote must be +/- 1"
   }
+});
+
+UploadSchema.virtual("comments", {
+  ref: "Comment",
+  localField: "_id",
+  foreignField: "upload",
+  justOne: false
 });
 
 UploadSchema.pre("validate", function (next) {

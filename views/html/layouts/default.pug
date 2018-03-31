@@ -2,14 +2,10 @@ doctype html
 html(lang="en")
   include ../includes/head.pug
   body
-    include ../includes/header.pug
-    .container
-      .page-header
-        block main
-      .messages
-        include ../includes/messages.pug
-      .content
-        include ../mixinx/pagination.pug
-        block content
+    header
+      include ../includes/header.pug
+      block main
+    main
+      include ../mixinx/pagination.pug
+      block content
     include ../includes/footer.pug
-    include ../includes/foot.pug

@@ -57,7 +57,9 @@ export class UploadController extends Controller {
         })
         .populate("pic")
         .populate("files")
-        .populate("dependencies");
+        .populate("dependencies")
+        .populate({ path: "comments", options: { limit: 5 }});
+
       if (req.upload) {
         next();
       } else {
