@@ -57,5 +57,26 @@ CommentSchema.pre("find", function (next) {
   next();
 });
 
+if (!CommentSchema.options.toObject) CommentSchema.options.toObject = {};
+CommentSchema.options.toObject.transform = function (doc: IComment, ret: any, options: { xml: boolean }) {
+  // convert ids to plain strings
+  ret._id = doc._id.toString();
+  if (!doc.populated("author") && doc.author) {
+    ret.author = doc.author.toString();
+  }
+  if (!doc.populated("upload") && doc.upload) {
+    ret.upload = doc.upload.toString();
+  }
+
+  if (options && options.xml == true) {
+    ret.body = {"#cdata": doc.body};
+  }
+
+  ret.updatedAt = (<Date>doc.updatedAt).toISOString();
+  ret.createdAt = (<Date>doc.createdAt).toISOString();
+
+  return ret;
+};
+
 
 export const Comment = mongoose.model<IComment>("Comment", CommentSchema) as ICommentModel;

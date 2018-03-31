@@ -58,7 +58,7 @@ export class UploadController extends Controller {
         .populate("pic")
         .populate("files")
         .populate("dependencies")
-        .populate({ path: "comments", options: { limit: 5 }});
+        .populate({path: "comments", options: {limit: 5, sort: {"created_at": -1}}});
 
       if (req.upload) {
         next();
@@ -98,9 +98,9 @@ export class UploadController extends Controller {
         const xml = builder.create("resource")
           .att("title", "uploads")
           .ele("_meta")
-            .ele("max_results", pagination.limit).up()
-            .ele("page", pagination.page).up()
-            .ele("total", pagination.total).up()
+          .ele("max_results", pagination.limit).up()
+          .ele("page", pagination.page).up()
+          .ele("total", pagination.total).up()
           .up()
           .ele({resource: uploads.map((u: IUpload) => u.toObject({xml: true}))})
           .att("title", "upload")
