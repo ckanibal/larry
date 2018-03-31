@@ -10,7 +10,7 @@ services:
       - UPLOAD_PATH=upload/
       - CLONKSPOT_URL=https://clonkspot.org/api/auth/jwt
       - SECRET=${SECRET}
-      - CLONKSPOT_SECRET=${CLONKSPOT_SECRET}
+      - JWT_AUTH_SECRET=${JWT_AUTH_SECRET}
     ports:
       - "8080:8080"
     depends_on:
