@@ -10,6 +10,7 @@ import { CommentController } from "../comments/CommentController";
 import { VotingController } from "../voting/VotingController";
 import auth = require("../../config/auth");
 import _ = require("lodash");
+import { EventStreamSocket } from "../../concerns/EventStream";
 
 export class UploadController extends Controller {
   protected _comments: CommentController;
@@ -25,20 +26,20 @@ export class UploadController extends Controller {
     // auth
     this.router.use(this.checkAuthentication);
 
-    this.router.get("/", auth.optional, this.checkPermissions(this.getRecord), this.index);
+    this.router.get("/", auth.optional, this.checkPermissions(this.getRecord), this.index.bind(this));
 
     // Forms
-    this.router.get("/create", auth.required, this.checkPermissions(this.getRecord), this.create);
+    this.router.get("/create", auth.required, this.checkPermissions(this.getRecord), this.create.bind(this));
 
     // Subresources
     this.router.use("/:upload/comments", this._comments.router);
     this.router.use("/:upload/vote", this._voting.router);
 
     // CRUD
-    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post);
-    this.router.get("/:upload", this.checkPermissions(this.getRecord), this.get);
-    this.router.put("/:upload", auth.required, this.checkPermissions(this.getRecord), this.put);
-    this.router.delete("/:upload", auth.required, this.checkPermissions(this.getRecord), this.delete);
+    this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post.bind(this));
+    this.router.get("/:upload", this.checkPermissions(this.getRecord), this.get.bind(this));
+    this.router.put("/:upload", auth.required, this.checkPermissions(this.getRecord), this.put.bind(this));
+    this.router.delete("/:upload", auth.required, this.checkPermissions(this.getRecord), this.delete.bind(this));
   }
 
   protected getRecord(req: Request, ...args: any[]): IUpload {
@@ -106,6 +107,10 @@ export class UploadController extends Controller {
           .att("title", "upload")
           .up();
         res.send(xml.end({pretty: true}));
+      },
+      "text/event-stream": () => {
+        const socket = new EventStreamSocket(req, res, next);
+        this.pipe(socket);
       }
     });
     next();
@@ -120,7 +125,8 @@ export class UploadController extends Controller {
     req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
     req.body.author = user;
 
-    const upload = await Upload.create(req.body);
+    const upload = await new Upload(req.body).save();
+    this.push(JSON.stringify(upload.toJSON()));
     res.json(upload);
   }
 
