@@ -29,7 +29,7 @@ block content
       ul.files
         each file in files
           li
-            a(href=appdir+`/media/${file.id}` alt=file.filename)= file.filename
+            a(href=appdir+`/media/${file.id}?download` alt=file.filename)= file.filename
 
     section
       h1 Comments
