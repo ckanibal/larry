@@ -6,7 +6,6 @@ import * as _ from "lodash";
 
 import { mongoose } from "../config/database";
 import { IUser } from "./User";
-import { IUpload } from "./Upload";
 
 /**
  * Tag Model
@@ -16,9 +15,6 @@ export interface ITag extends Document {
   text: string;
   slug: string;
   author: IUser;
-  upload: IUpload;
-
-  toXML(options: {}): Object;
 }
 
 export interface ITagModel extends Model<ITag> {
@@ -64,4 +60,4 @@ TagSchema.set("toObject", {
   }
 });
 
-export const Tag = mongoose.model<ITag>("Tag", TagSchema) as ITagModel;
+// export const Tag = mongoose.model<ITag>("Tag", TagSchema) as ITagModel;

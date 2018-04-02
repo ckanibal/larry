@@ -3,6 +3,7 @@ import { Schema, Model, Document, PaginateModel, Types, DocumentToObjectOptions 
 import mongoosePaginate = require("mongoose-paginate");
 import mongooseDelete = require("mongoose-delete");
 import slug = require("slug");
+import { ITag, TagSchema } from "./Tag";
 import { User, IUser } from "./User";
 import { File, IFile } from "./File";
 import { votingPlugin, Votable } from "./Vote";
@@ -18,7 +19,7 @@ export interface IUpload extends Document, Votable {
   title: string;
   description: string;
   author: IUser;
-  tags: string[];
+  tags: ITag[];
   pic: IFile;
   files: IFile[];
   dependencies: IUpload[];
@@ -66,7 +67,7 @@ const UploadSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User"
   },
-  tags: [String],
+  tags: [TagSchema],
   pic: {
     type: Schema.Types.ObjectId,
     ref: File.modelName
