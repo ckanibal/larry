@@ -1,7 +1,7 @@
 // models/Voting.ts
 
-import { mongoose } from "../config/database";
-import { Schema, Model, Document, Types } from "mongoose";
+import * as mongoose from "mongoose";
+import { Model, Schema, Document, Types } from "mongoose";
 import httpStatus = require("http-status");
 
 import { User, IUser } from "./User";
@@ -42,12 +42,14 @@ const VoteSchema = new Schema({
 VoteSchema.index({author: 1, "ref.document": 1}, {unique: true});
 
 
-VoteSchema.methods.updateReferenced = async function (next: Function) {
+VoteSchema.methods.updateReferenced = async function (options?: { remove: boolean }, next?: Function) {
   try {
+    const remove = (options && options.remove) || false;
     const vote = await Vote.findById(this.id).populate("ref.document");
     await vote.ref.document.update({
       $inc: {
-        "voting.sum": this.impact,
+        "voting.sum": remove ? -this.impact : this.impact,
+        "voting.count": remove ? -1 : 1,
       },
       updatedAt: vote.ref.document.updatedAt // TODO: find a better solution to disable timestamp-update
     });
@@ -58,15 +60,14 @@ VoteSchema.methods.updateReferenced = async function (next: Function) {
 };
 
 VoteSchema.post("save", function (doc, next) {
-  (<any>doc).updateReferenced(next);
+  this.updateReferenced({remove: false}, next);
 });
 
 VoteSchema.pre("remove", true, function (next, done) {
   next();
 
   // undo vote impact
-  this.impact = -this.impact;
-  this.updateReferenced(done);
+  this.updateReferenced({remove: true}, done);
 });
 
 export const Vote = mongoose.model<IVote>("Vote", VoteSchema) as IVoteModel;
@@ -77,10 +78,13 @@ export const Vote = mongoose.model<IVote>("Vote", VoteSchema) as IVoteModel;
  */
 export interface Votable {
   voting: {
-    sum: number
+    sum: number,
+    count: number;
   };
 
   vote(impact: Number, user: IUser, cb?: Function): Function;
+
+  updateReferenced(options?: { remove: boolean }, next?: Function): void;
 }
 
 export function votingPlugin<T extends Document>
@@ -88,6 +92,10 @@ export function votingPlugin<T extends Document>
   schema.add({
     voting: {
       sum: {
+        type: Schema.Types.Number,
+        default: 0,
+      },
+      count: {
         type: Schema.Types.Number,
         default: 0,
       }

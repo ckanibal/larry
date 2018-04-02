@@ -80,8 +80,8 @@ export class UploadController extends Controller {
       {
         sort,
         page,
-        limit
-      }
+        limit,
+      },
     );
     const response = {
       pagination,

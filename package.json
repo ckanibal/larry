@@ -22,7 +22,6 @@
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\""
   },
   "dependencies": {
-    "@types/jsontoxml": "^1.0.0",
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "body-parser": "^1.17.2",
@@ -36,7 +35,6 @@
     "express-validator": "^4.2.0",
     "gridfs-stream": "^1.1.1",
     "http-status": "^1.0.1",
-    "jsontoxml": "^1.0.0",
     "jsonwebtoken": "^7.4.3",
     "lodash": "^4.17.4",
     "mongoose": "^5.0.1",
@@ -47,14 +45,10 @@
     "passport": "^0.4.0",
     "passport-jwt": "^3.0.1",
     "passport-local": "^1.0.0",
-    "pluralize": "^6.0.0",
     "pug": "^2.0.0-rc.4",
     "rimraf": "^2.6.1",
     "sinon": "^4.0.1",
     "slug": "^0.9.1",
-    "tslint": "^5.9.1",
-    "typegoose": "^3.8.0",
-    "typescript": "^2.5.3",
     "xmlbuilder": "^9.0.7"
   },
   "devDependencies": {
@@ -100,7 +94,10 @@
     "mocha": "^4.0.1",
     "nodemon": "^1.11.0",
     "supertest": "^3.0.0",
-    "ts-node": "^3.3.0"
+    "ts-node": "^3.3.0",
+    "tslint": "^5.9.1",
+    "typegoose": "^3.8.0",
+    "typescript": "^2.5.3"
   },
   "peerDependencies": {
     "@types/passport": "0.3.5"
