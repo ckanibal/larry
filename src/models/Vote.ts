@@ -63,7 +63,7 @@ VoteSchema.post("save", function (doc, next) {
   this.updateReferenced({remove: false}, next);
 });
 
-VoteSchema.pre("remove", true, function (next, done) {
+VoteSchema.pre("remove", true, function (next: Function, done: Function) {
   next();
 
   // undo vote impact

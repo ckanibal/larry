@@ -2,8 +2,9 @@ import { mongoose } from "../config/database";
 import { Schema, Model, Document, PaginateModel, Types, DocumentToObjectOptions } from "mongoose";
 import mongoosePaginate = require("mongoose-paginate");
 import mongooseDelete = require("mongoose-delete");
+import uniqueValidator = require("mongoose-unique-validator");
 import slug = require("slug");
-import { ITag, TagSchema } from "./Tag";
+import { ITag, Taggable, taggablePlugin, TagSchema } from "./Tag";
 import { User, IUser } from "./User";
 import { File, IFile } from "./File";
 import { votingPlugin, Votable } from "./Vote";
@@ -14,12 +15,11 @@ import { votingPlugin, Votable } from "./Vote";
  */
 
 
-export interface IUpload extends Document, Votable {
+export interface IUpload extends Document, Votable, Taggable {
   slug: string;
   title: string;
   description: string;
   author: IUser;
-  tags: ITag[];
   pic: IFile;
   files: IFile[];
   dependencies: IUpload[];
@@ -51,12 +51,12 @@ const UploadSchema = new Schema({
   slug: {
     type: String,
     lowercase: true,
-    unique: true,
     required: true
   },
   title: {
     type: String,
     required: true,
+    unique: true,
     text: true
   },
   description: {
@@ -86,8 +86,10 @@ const UploadSchema = new Schema({
   toObject: {virtuals: true},
 });
 
+UploadSchema.plugin(uniqueValidator);
 UploadSchema.plugin(mongoosePaginate);
 UploadSchema.plugin(mongooseDelete);
+UploadSchema.plugin(taggablePlugin);
 UploadSchema.plugin(votingPlugin, {
   validate: {
     validator: function (v: number) {
@@ -104,7 +106,7 @@ UploadSchema.virtual("comments", {
   justOne: false
 });
 
-UploadSchema.pre("validate", function (next) {
+UploadSchema.pre("validate", function (next: Function) {
   if (!this.slug && this.title) {
     this.slugify();
   }
@@ -113,12 +115,13 @@ UploadSchema.pre("validate", function (next) {
 });
 
 // populate author per default
-UploadSchema.pre("find", function (next) {
+UploadSchema.pre("find", function (next: Function) {
   this.populate({path: "author", select: "username"});
   next();
 });
 
 UploadSchema.methods.slugify = function () {
+  slug.defaults.mode = "rfc3986";
   this.slug = slug(this.title);
 };
 
@@ -150,9 +153,12 @@ UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, opti
   if (options && options.xml == true) {
     ret.description = {"#cdata": doc.description};
   }
-
-  ret.updatedAt = (<Date>doc.updatedAt).toISOString();
-  ret.createdAt = (<Date>doc.createdAt).toISOString();
+  if (doc.updatedAt) {
+    ret.updatedAt = (<Date>doc.updatedAt).toISOString();
+  }
+  if (doc.createdAt) {
+    ret.createdAt = (<Date>doc.createdAt).toISOString();
+  }
 
   return ret;
 };

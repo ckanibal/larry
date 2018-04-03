@@ -2,38 +2,39 @@
 
 import { NextFunction, Request, Response } from "express";
 import httpStatus = require("http-status");
+import _ = require("lodash");
 import * as builder from "xmlbuilder";
-import { Controller, PaginationParams, ObjectIdParam } from "../Controller";
+import { Controller, PaginationParams, ObjectIdParam, ValidateAuthor } from "../Controller";
 import { Upload, IUpload } from "../../models/Upload";
-import { IUser, User } from "../../models/User";
 import { CommentController } from "../comments/CommentController";
 import { VotingController } from "../voting/VotingController";
-import auth = require("../../config/auth");
-import _ = require("lodash");
+import { TagController } from "./TagController";
 import { EventStreamSocket } from "../../concerns/EventStream";
+import auth = require("../../config/auth");
 
 export class UploadController extends Controller {
   protected _comments: CommentController;
   protected _voting: VotingController;
+  protected _tags: TagController;
 
   public constructor() {
     super();
     this._comments = new CommentController();
     this._voting = new VotingController((req: Request) => req.upload);
+    this._tags = new TagController ((req: Request) => req.upload);
 
     this.router.param("upload", this.uploadParam);
+    UploadController.RESERVED_FIELDS = Controller.RESERVED_FIELDS.concat(["comments", "tags"]);
 
     // auth
     this.router.use(this.checkAuthentication);
 
     this.router.get("/", auth.optional, this.checkPermissions(this.getRecord), this.index.bind(this));
 
-    // Forms
-    this.router.get("/create", auth.required, this.checkPermissions(this.getRecord), this.create.bind(this));
-
     // Subresources
     this.router.use("/:upload/comments", this._comments.router);
     this.router.use("/:upload/vote", this._voting.router);
+    this.router.use("/:upload/tags", this._tags.router);
 
     // CRUD
     this.router.post("/", auth.required, this.checkPermissions(this.getRecord), this.post.bind(this));
@@ -116,18 +117,17 @@ export class UploadController extends Controller {
     next();
   }
 
-
+  @ValidateAuthor
   public async post(req: Request, res: Response, next: NextFunction) {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.sendStatus(httpStatus.UNAUTHORIZED);
-    }
-    req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
-    req.body.author = user;
+    try {
+      req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
 
-    const upload = await new Upload(req.body).save();
-    this.push(JSON.stringify(upload.toJSON()));
-    res.json(upload);
+      const upload = await new Upload(req.body).save();
+      this.push(JSON.stringify(upload.toJSON()));
+      res.json(upload);
+    } catch (e) {
+      next(e);
+    }
   }
 
   public async get(req: Request, res: Response, next: NextFunction) {
@@ -145,6 +145,7 @@ export class UploadController extends Controller {
     });
   }
 
+  @ValidateAuthor
   public async put(req: Request, res: Response, next: NextFunction) {
     _.assign(req.upload, _.omit(req.body, UploadController.RESERVED_FIELDS));
     const upload = await req.upload.save();
@@ -154,13 +155,5 @@ export class UploadController extends Controller {
   public async delete(req: Request, res: Response, next: NextFunction) {
     await req.upload.delete();
     res.sendStatus(httpStatus.NO_CONTENT);
-  }
-
-  public async create(req: Request, res: Response, next: NextFunction) {
-    res.format({
-      html: function () {
-        res.render("upload/create");
-      },
-    });
   }
 }

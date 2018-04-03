@@ -1,6 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response, Router } from "express";
 import "reflect-metadata";
 import * as validator from "validator";
+import * as assert from "assert";
 import httpStatus = require("http-status");
 import { IUser } from "../models/User";
 import auth = require("../config/auth");
@@ -132,6 +133,29 @@ export function ObjectIdParam(target: any, key: string | symbol, descriptor: Typ
       const error = new Error("Parameter is not a valid id.");
       error.status = httpStatus.BAD_REQUEST;
       return next(error);
+    }
+  };
+  return descriptor;
+}
+
+export function ValidateAuthor(target: any, key: string | symbol, descriptor: TypedPropertyDescriptor<ExpressHandler>) {
+  if (descriptor === undefined) {
+    descriptor = Object.getOwnPropertyDescriptor(target, key);
+  }
+  const originalMethod = descriptor.value;
+
+  // hook method
+  descriptor.value = function (req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.body.author) {
+        req.body.author = req.user.id;
+      }
+
+      assert.ok(req.user.role === "admin" || req.body.author === req.user.id, "Invalid author.");
+      return originalMethod.apply(this, arguments);
+    } catch (e) {
+      e.status = httpStatus.FORBIDDEN;
+      next(e);
     }
   };
   return descriptor;

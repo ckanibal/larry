@@ -52,7 +52,7 @@ CommentSchema.plugin(votingPlugin, {
 });
 
 // populate author per default
-CommentSchema.pre("find", function (next) {
+CommentSchema.pre("find", function (next: Function) {
   this.populate({path: "author", select: "username"});
   next();
 });

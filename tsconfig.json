@@ -8,7 +8,8 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "baseUrl": ".",
-    "lib": ["es2016", "es2017.object", "es6"],
+    "lib": ["es2017", "esnext"],
+    "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "paths": {
       "*": [
@@ -21,7 +22,8 @@
     "src/types/custom.d.ts"
   ],
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "migrations/**/*"
   ],
   "exclude": [
     "node_modules",
