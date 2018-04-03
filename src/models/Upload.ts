@@ -57,18 +57,15 @@ const UploadSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    text: true
   },
   description: {
     type: String,
     required: true,
-    text: true,
   },
   author: {
     type: Schema.Types.ObjectId,
     ref: "User"
   },
-  tags: [TagSchema],
   pic: {
     type: Schema.Types.ObjectId,
     ref: File.modelName
@@ -86,6 +83,7 @@ const UploadSchema = new Schema({
   toJSON: {virtuals: true},
   toObject: {virtuals: true},
 });
+UploadSchema.index({title: "text", description: "text", "tags.slug": "text"});
 
 UploadSchema.plugin(uniqueValidator);
 UploadSchema.plugin(mongoosePaginate);
