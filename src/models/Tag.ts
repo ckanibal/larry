@@ -22,6 +22,7 @@ export interface ITag {
 
 
 export const TagSchema = new mongoose.Schema({
+  _id: <any>false,
   text: {
     type: Schema.Types.String,
     minlength: 2,
