@@ -83,5 +83,5 @@ export function taggablePlugin<UserType extends Document>
     assert (!this.tags.some((t: ITag) => t.slug == tag.slug || t.text == tag.text), "Tag must be unique!");
     this.tags.push(tag);
     return this.save();
-  }
+  };
 }
