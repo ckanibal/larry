@@ -62,6 +62,7 @@ const UploadSchema = new Schema({
   description: {
     type: String,
     required: true,
+    text: true,
   },
   author: {
     type: Schema.Types.ObjectId,

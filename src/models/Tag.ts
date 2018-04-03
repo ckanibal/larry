@@ -35,6 +35,7 @@ export const TagSchema = new mongoose.Schema({
     type: Schema.Types.String,
     required: true,
     index: true,
+    text: true,
   },
   author: {
     type: Schema.Types.ObjectId,
