@@ -122,7 +122,7 @@ export class UploadController extends Controller {
   public async post(req: Request, res: Response, next: NextFunction) {
     try {
       req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
-
+      console.log(req.body);
       const upload = await new Upload(req.body).save();
       this.push(JSON.stringify(upload.toJSON()));
       res.json(upload);

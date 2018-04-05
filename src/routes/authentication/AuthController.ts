@@ -24,7 +24,6 @@ export class AuthController extends Controller {
     super();
 
     // Forms
-    this.router.get("/login", this.login_form);
 
     this.router.post("/login", this.login);
     this.router.post("/logout", this.logout);
@@ -37,14 +36,6 @@ export class AuthController extends Controller {
         return url.parse(req.url).query;
       },
     }), this.jwtauth_scotty);
-  }
-
-  public async login_form(req: Request, res: Response, next: NextFunction) {
-    res.format({
-      html: function () {
-        res.render("auth/login");
-      },
-    });
   }
 
   public async login(req: Request, res: Response, next: NextFunction) {

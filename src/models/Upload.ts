@@ -64,7 +64,8 @@ const UploadSchema = new Schema({
   },
   author: {
     type: Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
+    required: true,
   },
   pic: {
     type: Schema.Types.ObjectId,

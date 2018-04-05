@@ -3,9 +3,10 @@ import "reflect-metadata";
 import * as validator from "validator";
 import * as assert from "assert";
 import httpStatus = require("http-status");
-import { IUser } from "../models/User";
+import { IUser, User } from "../models/User";
 import auth = require("../config/auth");
 import { Readable } from "stream";
+import { Types } from "mongoose";
 
 export interface IController {
   router: Router;
@@ -18,7 +19,7 @@ interface RecordWithOwnership {
 export abstract class Controller extends Readable implements IController {
   public router: Router;
 
-  protected static RESERVED_FIELDS = ["_id", "author", "__v", "created_at", "updated_at", "voting", "deleted"];
+  protected static RESERVED_FIELDS = ["_id", "__v", "created_at", "updated_at", "voting", "deleted"];
 
   public constructor() {
     super();
@@ -145,13 +146,14 @@ export function ValidateAuthor(target: any, key: string | symbol, descriptor: Ty
   const originalMethod = descriptor.value;
 
   // hook method
-  descriptor.value = function (req: Request, res: Response, next: NextFunction) {
+  descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.body.author) {
-        req.body.author = req.user.id;
+        const user = await User.findById(req.user.id);
+        req.body.author = user;
       }
 
-      assert.ok(req.user.role === "admin" || req.body.author === req.user.id, "Invalid author.");
+      assert.ok(req.user.role === "admin" || req.body.author.id === req.user.id, "Invalid author.");
       return originalMethod.apply(this, arguments);
     } catch (e) {
       e.status = httpStatus.FORBIDDEN;
