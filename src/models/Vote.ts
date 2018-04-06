@@ -109,6 +109,14 @@ export function votingPlugin<T extends Document>
     justOne: false
   });
 
+  schema.virtual("voting.score").get(function () {
+    if (this.voting.sum > 0) {
+      return 0.5 + this.voting.count / (2 * this.voting.sum);
+    } else {
+      return NaN;
+    }
+  });
+
   schema.methods.vote = function (impact: number = 1, user: T, cb?: Function) {
     if (options.validate.validator(impact)) {
       Vote.find({author: user.id, "ref.document": this.id}, (err: Error, votes: IVote[]) => {

@@ -77,7 +77,6 @@ export class UploadController extends Controller {
   @PaginationParams
   public async index(req: Request, res: Response, next: NextFunction) {
     const {query: {limit, page, sort = {createdAt: -1}, query = {}}} = req;
-    console.log(query);
     const {docs: uploads, ...pagination} = await Upload.paginate(query,
       {
         sort,
@@ -122,7 +121,6 @@ export class UploadController extends Controller {
   public async post(req: Request, res: Response, next: NextFunction) {
     try {
       req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
-      console.log(req.body);
       const upload = await new Upload(req.body).save();
       this.push(JSON.stringify(upload.toJSON()));
       res.json(upload);
