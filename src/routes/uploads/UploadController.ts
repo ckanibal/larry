@@ -76,45 +76,48 @@ export class UploadController extends Controller {
 
   @PaginationParams
   public async index(req: Request, res: Response, next: NextFunction) {
-    const {query: {limit, skip, sort = {createdAt: -1}, filter = {}}} = req;
-    const {docs: uploads, ...pagination} = await Upload.paginate(filter,
-      {
-        sort,
-        offset: skip,
-        limit,
-      },
-    );
-    const response = {
-      pagination,
-      uploads
-    };
+    try {
+      const {query: {limit, skip, sort = {createdAt: -1}, filter = {}}} = req;
+      const {docs: uploads, ...pagination} = await Upload.paginate(filter,
+        {
+          sort,
+          offset: skip,
+          limit,
+        },
+      );
+      const response = {
+        pagination,
+        uploads
+      };
 
-    res.format({
-      html: function () {
-        res.render("upload/index", response);
-      },
-      json: function () {
-        res.json(response);
-      },
-      "application/xml": function () {
-        const xml = builder.create("resource")
-          .att("title", "uploads")
-          .ele("_meta")
-          .ele("max_results", pagination.limit).up()
-          .ele("page", pagination.page).up()
-          .ele("total", pagination.total).up()
-          .up()
-          .ele({resource: uploads.map((u: IUpload) => u.toObject({xml: true}))})
-          .att("title", "upload")
-          .up();
-        res.send(xml.end({pretty: true}));
-      },
-      "text/event-stream": () => {
-        const socket = new EventStreamSocket(req, res, next);
-        this.pipe(socket);
-      }
-    });
-    next();
+      res.format({
+        html: function () {
+          res.render("upload/index", response);
+        },
+        json: function () {
+          res.json(response);
+        },
+        "application/xml": function () {
+          const xml = builder.create("resource")
+            .att("title", "uploads")
+            .ele("_meta")
+            .ele("max_results", pagination.limit).up()
+            .ele("page", pagination.page).up()
+            .ele("total", pagination.total).up()
+            .up()
+            .ele({resource: uploads.map((u: IUpload) => u.toObject({xml: true}))})
+            .att("title", "upload")
+            .up();
+          res.send(xml.end({pretty: true}));
+        },
+        "text/event-stream": () => {
+          const socket = new EventStreamSocket(req, res, next);
+          this.pipe(socket);
+        }
+      });
+    } catch (e) {
+      next(e);
+    }
   }
 
   @ValidateAuthor
