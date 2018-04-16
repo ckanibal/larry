@@ -6,7 +6,7 @@ import httpStatus = require("http-status");
 import { IUser, User } from "../models/User";
 import auth = require("../config/auth");
 import { Readable } from "stream";
-import { Types } from "mongoose";
+
 
 export interface IController {
   router: Router;
@@ -112,8 +112,8 @@ export function PaginationParams(target: any, key: string | symbol, descriptor: 
 
   // hook method
   descriptor.value = function (req: Request, ...args: any[]) {
-    const {query: {limit: _limit = "50", page: _page = "1", ...query}} = req;
-    req.query = {page: Math.max(1, +_page) || 1, limit: Math.max(1, +_limit) || 50, ...query};
+    const {query: {limit: _limit = "50", skip: _skip = "0", ...query}} = req;
+    req.query = {skip: Math.max(0, +_skip) || 0, limit: Math.max(1, +_limit) || 50, ...query};
     return originalMethod.call(this, req, ...args);
   };
   return descriptor;

@@ -11,7 +11,7 @@ block content
     each upload in uploads
       include upload
 
-  - if (pagination.pages >= 1)
+  - if (pagination.total >= 1)
       + pagination(pagination)
   - else
     h4.muted No uploads.&nbsp;

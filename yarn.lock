@@ -132,9 +132,9 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash@^4.14.106":
-  version "4.14.106"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.106.tgz#6093e9a02aa567ddecfe9afadca89e53e5dce4dd"
+"@types/lodash@^4.14.107":
+  version "4.14.107"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.107.tgz#b2d2ae3958bfb8ff828495cbe12214af9e4d035e"
 
 "@types/mime@*":
   version "2.0.0"
@@ -3265,6 +3265,10 @@ lodash.set@^4.0.0:
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/lodash.set/-/lodash.set-4.3.2.tgz#d8757b1da807dde24816b0d6a84bea1a76230b23"
 
+lodash@4.17.4:
+  version "4.17.4"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
+
 lodash@^4.11.2, lodash@^4.14.0, lodash@^4.16.0, lodash@^4.17.4, lodash@^4.3.0, lodash@^4.5.1:
   version "4.17.5"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.5.tgz#99a92d65c0272debe8c96b6057bc8fbfa3bed511"
@@ -3464,6 +3468,10 @@ mocha@^4.0.1:
     mkdirp "0.5.1"
     supports-color "4.4.0"
 
+moment@2.21.0:
+  version "2.21.0"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.21.0.tgz#2a114b51d2a6ec9e6d83cf803f838a878d8a023a"
+
 moment@2.x.x:
   version "2.22.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.0.tgz#7921ade01017dd45186e7fee5f424f0b8663a730"
@@ -3509,6 +3517,13 @@ mongoose-paginate@^5.0.3:
   resolved "https://registry.yarnpkg.com/mongoose-paginate/-/mongoose-paginate-5.0.3.tgz#d7ae49ed5bf64f1f7af7620ea865b67058c55371"
   dependencies:
     bluebird "3.0.5"
+
+mongoose-query-parser@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/mongoose-query-parser/-/mongoose-query-parser-1.1.2.tgz#6256ad27618bb0ec5980893077a80cdce0a6f2a6"
+  dependencies:
+    lodash "4.17.4"
+    moment "2.21.0"
 
 mongoose-unique-validator@^2.0.0:
   version "2.0.0"

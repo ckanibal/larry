@@ -76,11 +76,11 @@ export class UploadController extends Controller {
 
   @PaginationParams
   public async index(req: Request, res: Response, next: NextFunction) {
-    const {query: {limit, page, sort = {createdAt: -1}, query = {}}} = req;
-    const {docs: uploads, ...pagination} = await Upload.paginate(query,
+    const {query: {limit, skip, sort = {createdAt: -1}, filter = {}}} = req;
+    const {docs: uploads, ...pagination} = await Upload.paginate(filter,
       {
         sort,
-        page,
+        offset: skip,
         limit,
       },
     );

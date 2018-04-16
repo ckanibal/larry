@@ -8,6 +8,7 @@ import * as cookieParser from "cookie-parser";
 import * as expressValidator from "express-validator";
 import * as httpStatus from "http-status";
 import * as errorHandler from "errorhandler";
+import { MongooseQueryParser } from "mongoose-query-parser";
 
 
 import routes = require("./routes");
@@ -22,6 +23,7 @@ require("./config/passport");
 export class Server {
 
   public app: express.Application;
+  public parser: MongooseQueryParser;
 
   /**
    * Default constructor
@@ -54,12 +56,18 @@ export class Server {
     this.app = express();
 
     /**
+     * Create parser
+     */
+    this.parser = new MongooseQueryParser();
+
+    /**
      * Express configuration
      */
     this.app.disable("x-powered-by");
     this.app.set("port", process.env.PORT || 3000);
     this.app.set("view engine", "pug");
     this.app.set("views", "./views/html");
+    this.app.set("query parser", (query: string) => this.parser.parse(query || ""));
     this.app.locals.basedir = this.app.get("views");
     this.app.locals.appdir = process.env.APPDIR || "";
     this.app.use(logger("dev"));
@@ -119,6 +127,7 @@ export class Server {
    */
   private errorHandler(): void {
     this.app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      console.log("errorHandler:", err);
       res.format({
         html: function() {
           res.status(err.status || httpStatus.INTERNAL_SERVER_ERROR);
