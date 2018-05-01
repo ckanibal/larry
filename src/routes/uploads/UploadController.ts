@@ -102,7 +102,7 @@ export class UploadController extends Controller {
             .att("title", "uploads")
             .ele("_meta")
             .ele("max_results", pagination.limit).up()
-            .ele("page", pagination.page).up()
+            .ele("skip", pagination.offset).up()
             .ele("total", pagination.total).up()
             .up()
             .ele({resource: uploads.map((u: IUpload) => u.toObject({xml: true}))})
