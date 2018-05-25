@@ -67,7 +67,9 @@ export class Server {
     this.app.set("port", process.env.PORT || 3000);
     this.app.set("view engine", "pug");
     this.app.set("views", "./views/html");
-    this.app.set("query parser", (query: string) => this.parser.parse(query || ""));
+    this.app.set("query parser", (query: string) => this.parser.parse(query || "", {
+      q: { text: "foo" }
+    }));
     this.app.locals.basedir = this.app.get("views");
     this.app.locals.appdir = process.env.APPDIR || "";
     this.app.use(logger("dev"));

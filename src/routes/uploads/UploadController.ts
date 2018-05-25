@@ -78,6 +78,10 @@ export class UploadController extends Controller {
   public async index(req: Request, res: Response, next: NextFunction) {
     try {
       const {query: {limit, skip, sort = {createdAt: -1}, filter = {}}} = req;
+      if (filter.q) {
+        filter["$text"] = {$search: filter.q};
+        delete filter.q;
+      }
       const {docs: uploads, ...pagination} = await Upload.paginate(filter,
         {
           sort,
