@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import httpStatus = require("http-status");
 import _ = require("lodash");
 import * as builder from "xmlbuilder";
+import * as path from "path";
 import { Controller, PaginationParams, ObjectIdParam, ValidateAuthor } from "../Controller";
 import { Upload, IUpload } from "../../models/Upload";
 import { CommentController } from "../comments/CommentController";
@@ -11,8 +12,15 @@ import { VotingController } from "../voting/VotingController";
 import { TagController } from "./TagController";
 import { EventStreamSocket } from "../../concerns/EventStream";
 import auth = require("../../config/auth");
+import { File, IFile } from "../../models/File";
+import { mongoose } from "../../config/database";
 
 export class UploadController extends Controller {
+  private static TAG_EXTENSIONS = [
+    ".ocf", ".ocs", ".ocd", ".ocg", ".ocu", ".oci", ".ocp", ".ocm",
+    ".c4f", ".c4s", ".c4d", ".c4g", ".c4u", ".c4i", ".c4p", ".c4m",
+  ];
+
   protected _comments: CommentController;
   protected _voting: VotingController;
   protected _tags: TagController;
@@ -127,8 +135,24 @@ export class UploadController extends Controller {
   @ValidateAuthor
   public async post(req: Request, res: Response, next: NextFunction) {
     try {
-      req.body = _.omit(req.body, UploadController.RESERVED_FIELDS);
-      const upload = await new Upload(req.body).save();
+      const upload = await new Upload(_.omit(req.body, UploadController.RESERVED_FIELDS));
+      if (req.body.tags && Array.isArray(req.body.tags)) {
+        upload.tags = req.body.tags.map((t: string) => ({ text: t}));
+      }
+      await upload.save();
+      await upload.populate("files").execPopulate();
+
+      if (upload.files && Array.isArray(upload.files)) {
+        upload.files.map((file: IFile) => {
+          const extension = path.extname(file.filename);
+          if (UploadController.TAG_EXTENSIONS.includes(extension)) {
+            try {
+              upload.tag(extension);
+            } catch (err) {
+            }
+          }
+        });
+      }
       this.push(JSON.stringify(upload.toJSON()));
       res.json(upload);
     } catch (e) {

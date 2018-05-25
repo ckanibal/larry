@@ -67,7 +67,7 @@ TagSchema.set("toObject", {
 export interface Taggable extends Document {
   tags: ITag[];
 
-  tag(tag: ITag): void;
+  tag(tag: string): void;
 }
 
 export function taggablePlugin<UserType extends Document>
@@ -78,10 +78,10 @@ export function taggablePlugin<UserType extends Document>
     },
   });
 
-  schema.methods.tag = function(tag: ITag) {
+  schema.methods.tag = function(tag: string) {
     // ensure tag is unique
-    assert (!this.tags.some((t: ITag) => t.slug == tag.slug || t.text == tag.text), "Tag must be unique!");
-    this.tags.push(tag);
+    assert (!this.tags.some((t: ITag) => (t.slug == slug(tag) || t.text == tag)), "Tag must be unique!");
+    this.tags.push({ text: tag, slug: slug(tag) });
     return this.save();
   };
 }

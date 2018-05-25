@@ -4,17 +4,10 @@ import mongoosePaginate = require("mongoose-paginate");
 import mongooseDelete = require("mongoose-delete");
 import uniqueValidator = require("mongoose-unique-validator");
 import slug = require("slug");
-import * as path from "path";
 import { ITag, Taggable, taggablePlugin, TagSchema } from "./Tag";
 import { User, IUser } from "./User";
 import { File, IFile } from "./File";
 import { votingPlugin, Votable } from "./Vote";
-
-
-const TAG_EXTENSIONS = [
-  ".ocf", ".ocs", ".ocd", ".ocg", ".ocu", ".oci", ".ocp", ".ocm",
-  ".c4f", ".c4s", ".c4d", ".c4g", ".c4u", ".c4i", ".c4p", ".c4m",
-];
 
 /**
  * Upload Model
@@ -137,23 +130,6 @@ UploadSchema.methods.updateFavoriteCount = function () {
     return upload.save();
   });
 };
-
-UploadSchema.pre("save", function (next: Function) {
-  this.populate("files");
-  console.log(this);
-  Promise.all(this.files.map((id: mongoose.Types.ObjectId) =>
-    File.findById(id,  (err, file: IFile) => {
-      if (err) {
-        next(err);
-      } else {
-        const extension = path.extname(file.filename);
-        if (TAG_EXTENSIONS.includes(extension)) {
-          this.tag({text: extension});
-        }
-      }
-    })
-  )).then(() => next()).catch((err) => next(err));
-});
 
 if (!UploadSchema.options.toObject) UploadSchema.options.toObject = {};
 UploadSchema.options.toObject.transform = function (doc: IUpload, ret: any, options: { xml: boolean }) {
